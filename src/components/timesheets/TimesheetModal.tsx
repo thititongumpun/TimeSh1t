@@ -122,9 +122,10 @@ export function TimesheetModal({ timesheet, projects, onClose }: Props) {
             </button>
             <button
               type="submit"
-              class={`btn btn-primary ${loading ? 'loading' : ''}`}
+              class="btn btn-primary"
               disabled={loading}
             >
+              {loading && <span class="loading loading-spinner loading-xs mr-2" />}
               {timesheet ? 'Save' : 'Create'}
             </button>
           </div>

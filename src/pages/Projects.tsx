@@ -13,6 +13,7 @@ export function Projects() {
 
   async function load() {
     setLoading(true)
+    setError(null)
     const { data, error } = await fetchProjects()
     if (error) setError(error.message)
     else setProjects((data as Project[]) ?? [])
@@ -27,6 +28,7 @@ export function Projects() {
   }
 
   async function handleDelete(id: string) {
+    if (!window.confirm('Delete this project?')) return
     const { error } = await deleteProject(id)
     if (error) setError(error.message)
     else load()

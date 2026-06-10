@@ -22,7 +22,10 @@ export function Sidebar() {
         </ul>
       </nav>
       <div class="p-4">
-        <button class="btn btn-ghost btn-sm w-full" onClick={() => signOut()}>
+        <button class="btn btn-ghost btn-sm w-full" onClick={async () => {
+          const { error } = await signOut()
+          if (error) alert(error.message)
+        }}>
           Sign out
         </button>
       </div>

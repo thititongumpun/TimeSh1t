@@ -29,6 +29,7 @@ export function Home() {
 
   async function loadTimesheets() {
     setLoading(true)
+    setError(null)
     const { data, error } = await fetchTimesheets(filters)
     if (error) setError(error.message)
     else setTimesheets((data as TimesheetWithProject[]) ?? [])
@@ -36,8 +37,9 @@ export function Home() {
   }
 
   async function loadProjects() {
-    const { data } = await fetchActiveProjects()
-    setProjects((data as Project[]) ?? [])
+    const { data, error } = await fetchActiveProjects()
+    if (error) setError(error.message)
+    else setProjects((data as Project[]) ?? [])
   }
 
   useEffect(() => { loadProjects() }, [])
@@ -49,6 +51,7 @@ export function Home() {
   }
 
   async function handleDelete(id: string) {
+    if (!window.confirm('Delete this timesheet entry?')) return
     const { error } = await deleteTimesheet(id)
     if (error) setError(error.message)
     else loadTimesheets()

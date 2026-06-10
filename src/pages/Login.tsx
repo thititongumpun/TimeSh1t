@@ -55,9 +55,10 @@ export function Login() {
             </div>
             <button
               type="submit"
-              class={`btn btn-primary w-full ${loading ? 'loading' : ''}`}
+              class="btn btn-primary w-full"
               disabled={loading}
             >
+              {loading && <span class="loading loading-spinner loading-xs mr-2" />}
               Sign in
             </button>
           </form>
