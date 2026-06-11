@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { getAuthenticatedUserId } from './auth-user'
 import type { ProjectInput } from '../types'
 
 export async function fetchProjects() {
@@ -10,7 +11,13 @@ export async function fetchActiveProjects() {
 }
 
 export async function createProject(data: ProjectInput) {
-  return supabase.from('projects').insert(data).select().single()
+  const userId = await getAuthenticatedUserId()
+
+  return supabase
+    .from('projects')
+    .insert({ ...data, user_id: userId })
+    .select()
+    .single()
 }
 
 export async function updateProject(id: string, data: Partial<ProjectInput>) {

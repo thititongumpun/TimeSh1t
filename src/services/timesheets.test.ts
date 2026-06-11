@@ -2,11 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockFrom = vi.hoisted(() => vi.fn())
 const mockSummarizeDescription = vi.hoisted(() => vi.fn())
+const mockGetAuthenticatedUserId = vi.hoisted(() => vi.fn())
 vi.mock('../lib/supabase', () => ({
   supabase: { from: mockFrom },
 }))
 vi.mock('./cloudflare-ai', () => ({
   summarizeDescription: mockSummarizeDescription,
+}))
+vi.mock('./auth-user', () => ({
+  getAuthenticatedUserId: mockGetAuthenticatedUserId,
 }))
 
 import {
@@ -43,6 +47,7 @@ describe('timesheets service', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSummarizeDescription.mockResolvedValue('AI-generated summary')
+    mockGetAuthenticatedUserId.mockResolvedValue('user-1')
   })
 
   it('fetchTimesheets selects with project join ordered by date_memo desc', async () => {
@@ -117,6 +122,7 @@ describe('timesheets service', () => {
     expect(chain.insert).toHaveBeenCalledWith({
       ...input,
       ai_summary: 'AI-generated summary',
+      user_id: 'user-1',
     })
     expect(chain.single).toHaveBeenCalled()
   })
@@ -133,6 +139,24 @@ describe('timesheets service', () => {
       is_complete: false,
     })).rejects.toThrow('Cloudflare AI request failed.')
 
+    expect(chain.insert).not.toHaveBeenCalled()
+  })
+
+  it('does not call Cloudflare AI or insert when there is no authenticated user', async () => {
+    const chain = makeChain({ data: null, error: null })
+    mockFrom.mockReturnValue(chain)
+    mockGetAuthenticatedUserId.mockRejectedValue(
+      new Error('You must be signed in to save data.'),
+    )
+
+    await expect(createTimesheet({
+      date_memo: '2026-06-11',
+      description: 'Did stuff',
+      project_id: null,
+      is_complete: false,
+    })).rejects.toThrow('You must be signed in to save data.')
+
+    expect(mockSummarizeDescription).not.toHaveBeenCalled()
     expect(chain.insert).not.toHaveBeenCalled()
   })
 

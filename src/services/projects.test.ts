@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }))
+const { mockFrom, mockGetAuthenticatedUserId } = vi.hoisted(() => ({
+  mockFrom: vi.fn(),
+  mockGetAuthenticatedUserId: vi.fn(),
+}))
 vi.mock('../lib/supabase', () => ({
   supabase: { from: mockFrom },
+}))
+vi.mock('./auth-user', () => ({
+  getAuthenticatedUserId: mockGetAuthenticatedUserId,
 }))
 
 import { fetchProjects, fetchActiveProjects, createProject, updateProject, deleteProject } from './projects'
@@ -21,7 +27,10 @@ function makeChain(result: any) {
 }
 
 describe('projects service', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetAuthenticatedUserId.mockResolvedValue('user-1')
+  })
 
   it('fetchProjects queries the projects table ordered by inserted_at desc', async () => {
     const chain = makeChain({ data: [], error: null })
@@ -49,8 +58,30 @@ describe('projects service', () => {
 
     await createProject({ project_no: 'P001', project_name: 'Alpha', is_active: true })
 
-    expect(chain.insert).toHaveBeenCalledWith({ project_no: 'P001', project_name: 'Alpha', is_active: true })
+    expect(mockGetAuthenticatedUserId).toHaveBeenCalled()
+    expect(chain.insert).toHaveBeenCalledWith({
+      project_no: 'P001',
+      project_name: 'Alpha',
+      is_active: true,
+      user_id: 'user-1',
+    })
     expect(chain.single).toHaveBeenCalled()
+  })
+
+  it('does not insert a project when there is no authenticated user', async () => {
+    const chain = makeChain({ data: null, error: null })
+    mockFrom.mockReturnValue(chain)
+    mockGetAuthenticatedUserId.mockRejectedValue(
+      new Error('You must be signed in to save data.'),
+    )
+
+    await expect(createProject({
+      project_no: 'P001',
+      project_name: 'Alpha',
+      is_active: true,
+    })).rejects.toThrow('You must be signed in to save data.')
+
+    expect(chain.insert).not.toHaveBeenCalled()
   })
 
   it('updateProject applies update by id', async () => {

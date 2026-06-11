@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { getAuthenticatedUserId } from './auth-user'
 import { summarizeDescription } from './cloudflare-ai'
 import type { TimesheetFilters, TimesheetInput } from '../types'
 
@@ -17,11 +18,12 @@ export async function fetchTimesheets(filters: TimesheetFilters) {
 }
 
 export async function createTimesheet(data: TimesheetInput) {
+  const userId = await getAuthenticatedUserId()
   const aiSummary = await summarizeDescription(data.description)
 
   return supabase
     .from('timesheets')
-    .insert({ ...data, ai_summary: aiSummary })
+    .insert({ ...data, ai_summary: aiSummary, user_id: userId })
     .select()
     .single()
 }
