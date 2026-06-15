@@ -1,4 +1,4 @@
-const MODEL = '@cf/meta/llama-3.1-8b-instruct'
+const MODEL = '@cf/meta/llama-3.1-8b-instruct-fp8'
 
 const SYSTEM_PROMPT = `You are a technical writing editor. Your job is to fix grammar, spelling, and technical terminology in the given text.
 Rules:
@@ -68,8 +68,10 @@ export default {
       }
 
       return json({ summary })
-    } catch {
-      return json({ error: 'Cloudflare AI request failed.' }, 502)
+    } catch (err) {
+      // ponytail: surface the real reason so the next failure isn't blind
+      const reason = err instanceof Error ? err.message : 'unknown error'
+      return json({ error: `Cloudflare AI request failed: ${reason}` }, 502)
     }
   },
 }
