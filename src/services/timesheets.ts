@@ -23,7 +23,7 @@ export async function fetchArchivedTimesheets(page: number, pageSize: number) {
   const userId = await getAuthenticatedUserId()
   const from = page * pageSize
   return supabase
-    .from('archived_timesheet')
+    .from('archived_timesheets')
     .select('*, projects(project_name, project_no)', { count: 'exact' })
     .eq('user_id', userId)
     .order('date_memo', { ascending: false })
