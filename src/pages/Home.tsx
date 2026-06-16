@@ -2,18 +2,24 @@ import { useState, useEffect } from 'preact/hooks'
 import { writeText } from '@tauri-apps/plugin-clipboard-manager'
 import { fetchTimesheets, deleteTimesheet, updateTimesheet } from '../services/timesheets'
 import { fetchActiveProjects } from '../services/projects'
+import { confirmDialog } from '../lib/confirm'
 import { TimesheetTable } from '../components/timesheets/TimesheetTable'
 import { TimesheetFilters } from '../components/timesheets/TimesheetFilters'
 import { TimesheetModal } from '../components/timesheets/TimesheetModal'
 import type { TimesheetWithProject, TimesheetFilters as Filters, Project } from '../types'
+
+// Local YYYY-MM-DD — toISOString() would shift to UTC and roll the date back a day in +07.
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 function defaultFilters(): Filters {
   const now = new Date()
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
   return {
-    date_from: firstDay.toISOString().slice(0, 10),
-    date_to: lastDay.toISOString().slice(0, 10),
+    date_from: ymd(firstDay),
+    date_to: ymd(lastDay),
     project_id: null,
     status: 'all',
   }
@@ -54,19 +60,19 @@ export function Home() {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this timesheet entry?')) return
+    if (!(await confirmDialog('Delete this timesheet entry?'))) return
     const { error } = await deleteTimesheet(id)
     if (error) setError(error.message)
     else loadTimesheets()
   }
 
-  async function handleCopySummary(summary: string) {
+  async function handleCopy(text: string, label: string) {
     setActionMessage(null)
     try {
-      await writeText(summary)
-      setActionMessage('AI summary copied.')
+      await writeText(text)
+      setActionMessage(`${label} copied.`)
     } catch {
-      setError('Could not copy the AI summary.')
+      setError(`Could not copy the ${label.toLowerCase()}.`)
     }
   }
 
@@ -129,7 +135,8 @@ export function Home() {
           timesheets={timesheets}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onCopySummary={handleCopySummary}
+          onCopyDescription={(d) => handleCopy(d, 'Description')}
+          onCopySummary={(s) => handleCopy(s, 'AI summary')}
           onToggleComplete={handleToggleComplete}
           updatingId={updatingId}
         />

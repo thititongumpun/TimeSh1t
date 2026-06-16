@@ -87,7 +87,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside class="w-48 min-h-screen bg-base-200 flex flex-col">
+    <aside class="w-48 h-screen bg-base-200 flex flex-col">
       <div class="p-4 font-bold text-xl text-primary">TimeSh1t</div>
       <nav class="flex-1 px-2">
         <ul class="menu menu-sm">

@@ -1,11 +1,18 @@
 const MODEL = '@cf/meta/llama-3.1-8b-instruct-fp8'
 
-const SYSTEM_PROMPT = `You are a technical writing editor. Your job is to fix grammar, spelling, and technical terminology in the given text.
+const SYSTEM_PROMPT = `You are a technical writing editor. Your job is to fix grammar, spelling, and technical terminology in the given text, then format it.
 Rules:
-- Do NOT modify any content inside square brackets, e.g. [IMP], [PersonelCost], [TAG]. Keep them exactly as-is.
-- Fix typos, grammar, and unclear phrasing.
-- Keep the same structure, line breaks, and meaning.
-- Return ONLY the corrected text. No explanation, no preamble.`
+- Do NOT modify any content inside square brackets, e.g. [IMP], [INVX], [PersonelCost]. Keep the tag exactly as-is.
+- A square-bracket tag must sit alone on its own line. Move any text that follows it on the same line down to the next line.
+- Every line of body text (anything that is not a bracket tag) must start with "- ". Add the dash if it is missing; keep existing dashes.
+- Fix typos, grammar, and unclear phrasing. Keep the original meaning and line breaks between separate items.
+- Return ONLY the corrected text. No explanation, no preamble.
+
+Example input:
+[INVX] update innovest x cluster
+Example output:
+[INVX]
+- update innovest x cluster`
 
 interface AiBinding {
   run: (

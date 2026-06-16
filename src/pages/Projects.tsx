@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks'
 import { fetchProjects, deleteProject } from '../services/projects'
 import { ProjectTable } from '../components/projects/ProjectTable'
 import { ProjectModal } from '../components/projects/ProjectModal'
+import { confirmDialog } from '../lib/confirm'
 import type { Project } from '../types'
 
 export function Projects() {
@@ -28,7 +29,7 @@ export function Projects() {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this project?')) return
+    if (!(await confirmDialog('Delete this project?'))) return
     const { error } = await deleteProject(id)
     if (error) setError(error.message)
     else load()

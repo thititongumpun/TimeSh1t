@@ -33,6 +33,7 @@ function renderTable(overrides: Partial<Parameters<typeof TimesheetTable>[0]> = 
     timesheets,
     onEdit: vi.fn(),
     onDelete: vi.fn(),
+    onCopyDescription: vi.fn(),
     onCopySummary: vi.fn(),
     onToggleComplete: vi.fn(),
     ...overrides,

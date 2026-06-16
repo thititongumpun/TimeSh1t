@@ -5,6 +5,7 @@ interface Props {
   timesheets: TimesheetWithProject[]
   onEdit: (t: TimesheetWithProject) => void
   onDelete: (id: string) => void
+  onCopyDescription: (description: string) => void
   onCopySummary: (summary: string) => void
   onToggleComplete: (t: TimesheetWithProject) => void
   updatingId?: string | null
@@ -14,6 +15,7 @@ export function TimesheetTable({
   timesheets,
   onEdit,
   onDelete,
+  onCopyDescription,
   onCopySummary,
   onToggleComplete,
   updatingId,
@@ -108,6 +110,15 @@ export function TimesheetTable({
                 }}
               >
                 {actionTimesheet.is_complete ? 'Mark incomplete' : 'Mark done'}
+              </button>
+              <button
+                class="btn btn-outline justify-start"
+                onClick={() => {
+                  onCopyDescription(actionTimesheet.description)
+                  setActionTimesheet(null)
+                }}
+              >
+                Copy description
               </button>
               <button
                 class="btn btn-outline justify-start"
