@@ -101,6 +101,11 @@ export function Sidebar() {
               Projects
             </a>
           </li>
+          <li>
+            <a href="/archived" class={url.startsWith('/archived') ? 'active' : ''}>
+              Archived
+            </a>
+          </li>
         </ul>
       </nav>
       <div class="p-3">

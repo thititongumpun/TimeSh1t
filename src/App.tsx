@@ -5,6 +5,7 @@ import { currentUser, authLoading } from './store/auth'
 import { Login } from './pages/Login'
 import { Home } from './pages/Home'
 import { Projects } from './pages/Projects'
+import { Archived } from './pages/Archived'
 import { Layout } from './components/Layout'
 
 export function App() {
@@ -34,6 +35,7 @@ export function App() {
         <Router>
           <Route path="/" component={Home} />
           <Route path="/projects" component={Projects} />
+          <Route path="/archived" component={Archived} />
         </Router>
       </Layout>
     </LocationProvider>

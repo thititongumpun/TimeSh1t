@@ -19,6 +19,17 @@ export async function fetchTimesheets(filters: TimesheetFilters) {
   return query.order('date_memo', { ascending: false })
 }
 
+export async function fetchArchivedTimesheets(page: number, pageSize: number) {
+  const userId = await getAuthenticatedUserId()
+  const from = page * pageSize
+  return supabase
+    .from('archived_timesheet')
+    .select('*, projects(project_name, project_no)', { count: 'exact' })
+    .eq('user_id', userId)
+    .order('date_memo', { ascending: false })
+    .range(from, from + pageSize - 1)
+}
+
 export async function createTimesheet(data: TimesheetInput) {
   const userId = await getAuthenticatedUserId()
   const aiSummary = await summarizeDescription(data.description)
