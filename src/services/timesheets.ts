@@ -4,9 +4,11 @@ import { summarizeDescription } from './cloudflare-ai'
 import type { TimesheetFilters, TimesheetInput } from '../types'
 
 export async function fetchTimesheets(filters: TimesheetFilters) {
+  const userId = await getAuthenticatedUserId()
   let query = supabase
     .from('timesheets')
     .select('*, projects(project_name, project_no)')
+    .eq('user_id', userId)
 
   if (filters.date_from) query = query.gte('date_memo', filters.date_from)
   if (filters.date_to) query = query.lte('date_memo', filters.date_to)
