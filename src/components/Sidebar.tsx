@@ -147,6 +147,11 @@ export function Sidebar() {
               Holiday
             </a>
           </li>
+          <li>
+            <a href="/notes" class={url.startsWith('/notes') ? 'active' : ''}>
+              Notes
+            </a>
+          </li>
         </ul>
       </nav>
       <div class="px-3 pb-1">

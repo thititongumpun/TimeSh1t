@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [1.3.0] - 2026-06-18
+
+- Notes tab in the sidebar — jot quick notes, delete them; stored locally on the device.
+
 ## [1.2.0] - 2026-06-18
 
 - Change your password in user settings (re-authenticates with the current password first).
