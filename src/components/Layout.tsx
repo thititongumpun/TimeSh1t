@@ -23,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
         {children}
         {showTop && (
           <button
-            class="btn btn-circle btn-primary fixed bottom-6 right-6 z-30 shadow-lg"
+            class="btn btn-circle btn-primary fixed bottom-20 right-6 z-30 shadow-lg"
             aria-label="Scroll to top"
             onClick={() => mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
           >

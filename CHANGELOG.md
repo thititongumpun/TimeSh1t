@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [1.4.1] - 2026-06-19
+
+- Moved the scroll-to-top button up so it no longer covers the pagination controls.
+
 ## [1.4.0] - 2026-06-19
 
 - Copy AI summary action button per row on the Archived page.
