@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks'
 import * as XLSX from 'xlsx'
 import { save } from '@tauri-apps/plugin-dialog'
 import { writeFile } from '@tauri-apps/plugin-fs'
+import { writeText } from '@tauri-apps/plugin-clipboard-manager'
 import { fetchArchivedTimesheetsInRange } from '../services/timesheets'
 import { ExpandableText } from '../components/ExpandableText'
 import type { TimesheetWithProject } from '../types'
@@ -39,6 +40,7 @@ export function Archived() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const { from, to } = periodRange(startMonth, endMonth)
 
@@ -82,6 +84,12 @@ export function Archived() {
       XLSX.writeFile(book, filename)
     }
     setExporting(false)
+  }
+
+  async function copySummary(id: string, summary: string) {
+    await writeText(summary)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 2000)
   }
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
@@ -157,6 +165,7 @@ export function Archived() {
                   <th>Project</th>
                   <th>Complete</th>
                   <th>AI Summary</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,6 +183,15 @@ export function Archived() {
                       ) : (
                         <span class="text-base-content/30">—</span>
                       )}
+                    </td>
+                    <td>
+                      <button
+                        class="btn btn-ghost btn-xs"
+                        disabled={!t.ai_summary}
+                        onClick={() => t.ai_summary && copySummary(t.id, t.ai_summary)}
+                      >
+                        {copiedId === t.id ? 'Copied' : 'Copy AI'}
+                      </button>
                     </td>
                   </tr>
                 ))}

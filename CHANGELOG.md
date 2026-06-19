@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [1.4.0] - 2026-06-19
+
+- Copy AI summary action button per row on the Archived page.
+
 ## [1.3.0] - 2026-06-18
 
 - Notes tab in the sidebar — jot quick notes, delete them; stored locally on the device.
