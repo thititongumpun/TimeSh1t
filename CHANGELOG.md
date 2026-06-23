@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [1.5.1] - 2026-06-23
+
+- Projects are now shared across all users — creating a project no longer ties it to one account.
+
 ## [1.5.0] - 2026-06-23
 
 - Online users now show as a row of avatars; hover any avatar to see the person's name.
