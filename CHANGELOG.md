@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.1] - 2026-06-25
+
+- **Windows:** no more `cmd` console windows flashing when the app calls `claude` (status checks and Jira actions now spawn with `CREATE_NO_WINDOW`).
+
 ## [3.1.0] - 2026-06-25
 
 - **General Jira assistant:** the Jira tab now does anything the Atlassian MCP supports — create issues, edit summary/description, add comments, assign, query ("what's assigned to me?"), as well as transition status. (Previously limited to "transition to Done".)

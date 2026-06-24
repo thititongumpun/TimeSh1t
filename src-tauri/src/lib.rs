@@ -1,6 +1,19 @@
 use std::io::{BufRead, BufReader, Read};
 use tauri::Emitter;
 
+// Build a `claude` command. On Windows, suppress the console window that would otherwise
+// flash on every spawn (CREATE_NO_WINDOW).
+fn claude_command() -> std::process::Command {
+    #[allow(unused_mut)]
+    let mut cmd = std::process::Command::new("claude");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+    }
+    cmd
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -46,7 +59,7 @@ async fn ask_claude(app: tauri::AppHandle, prompt: String) -> Result<String, Str
         // ponytail: bypassPermissions runs the Jira MCP tools without an interactive
         // prompt (impossible in headless mode). Blast radius = this user's own Atlassian
         // MCP. Upgrade path: --allowedTools "mcp__atlassian__*" to forbid any other tool.
-        let mut child = std::process::Command::new("claude")
+        let mut child = claude_command()
             .args([
                 "-p",
                 &prompt,
@@ -119,7 +132,7 @@ async fn ask_claude(app: tauri::AppHandle, prompt: String) -> Result<String, Str
 #[tauri::command]
 async fn claude_status() -> &'static str {
     tauri::async_runtime::spawn_blocking(|| {
-        if std::process::Command::new("claude").arg("--version").output().is_err() {
+        if claude_command().arg("--version").output().is_err() {
             return "no_cli";
         }
         // `claude mcp list` prints one line per server, e.g.
@@ -127,7 +140,7 @@ async fn claude_status() -> &'static str {
         //   atlassian: https://… (HTTP) - ! Needs authentication
         // Require the atlassian line to actually be Connected — a configured-but-unauth'd
         // server can't transition issues, so it's not "ready".
-        match std::process::Command::new("claude").args(["mcp", "list"]).output() {
+        match claude_command().args(["mcp", "list"]).output() {
             Ok(o) => {
                 let text = String::from_utf8_lossy(&o.stdout).to_lowercase();
                 let connected = text
