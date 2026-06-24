@@ -3,6 +3,11 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.4] - 2026-06-25
+
+- Added a quick-copy AI summary button next to the row actions in the timesheets table.
+- Temporarily hid the "Mark done + close Jira" action while the Jira close flow is being finalized.
+
 ## [3.1.3] - 2026-06-25
 
 - Removed the "developed by thiti_t and claude" page footer.

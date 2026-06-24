@@ -23,7 +23,7 @@ export function TimesheetTable({
   onCopyDescription,
   onCopySummary,
   onToggleComplete,
-  onMarkDoneAndCloseJira,
+  // onMarkDoneAndCloseJira, // ponytail: re-add when "Mark done + close Jira" is unhidden
   updatingId,
   selectedIds,
   onToggleSelect,
@@ -93,15 +93,25 @@ export function TimesheetTable({
                   )}
                 </td>
                 <td>
-                  <button
-                    class="btn btn-ghost btn-sm btn-square"
-                    aria-label={`Actions for ${t.description}`}
-                    onClick={() => setActionTimesheet(t)}
-                  >
-                    {updatingId === t.id
-                      ? <span class="loading loading-spinner loading-xs" />
-                      : <span class="text-lg leading-none">...</span>}
-                  </button>
+                  <div class="flex items-center gap-1">
+                    <button
+                      class="btn btn-ghost btn-sm btn-square"
+                      aria-label={`Copy AI summary for ${t.description}`}
+                      disabled={!t.ai_summary}
+                      onClick={() => t.ai_summary && onCopySummary(t.ai_summary)}
+                    >
+                      <span class="text-base leading-none">📋</span>
+                    </button>
+                    <button
+                      class="btn btn-ghost btn-sm btn-square"
+                      aria-label={`Actions for ${t.description}`}
+                      onClick={() => setActionTimesheet(t)}
+                    >
+                      {updatingId === t.id
+                        ? <span class="loading loading-spinner loading-xs" />
+                        : <span class="text-lg leading-none">...</span>}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -141,6 +151,7 @@ export function TimesheetTable({
               >
                 {actionTimesheet.is_complete ? 'Mark incomplete' : 'Mark done'}
               </button>
+              {/* ponytail: hidden for now, re-enable when Jira close flow is ready
               <button
                 class="btn btn-outline btn-primary justify-start"
                 disabled={updatingId === actionTimesheet.id}
@@ -151,6 +162,7 @@ export function TimesheetTable({
               >
                 Mark done + close Jira
               </button>
+              */}
               <button
                 class="btn btn-outline justify-start"
                 onClick={() => {
