@@ -40,11 +40,20 @@ export function TimesheetModal({ timesheet, projects, onClose }: Props) {
 
   async function handleSubmit(e: Event) {
     e.preventDefault()
+    const trimmedDescription = description.trim()
+    if (!trimmedDescription) {
+      setError('Description is required.')
+      return
+    }
+    if (!projectId) {
+      setError('Project is required.')
+      return
+    }
     setLoading(true)
     setError(null)
     const payload: TimesheetInput = {
       date_memo: dateMemo,
-      description,
+      description: trimmedDescription,
       project_id: projectId || null,
       is_complete: isComplete,
     }
@@ -127,8 +136,9 @@ export function TimesheetModal({ timesheet, projects, onClose }: Props) {
               class="select select-bordered"
               value={projectId}
               onChange={(e) => setProjectId(e.currentTarget.value)}
+              required
             >
-              <option value="">No project</option>
+              <option value="" disabled>Select a project</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.project_name}

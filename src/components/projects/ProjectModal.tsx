@@ -16,9 +16,15 @@ export function ProjectModal({ project, onClose }: Props) {
 
   async function handleSubmit(e: Event) {
     e.preventDefault()
+    const trimmedNo = projectNo.trim()
+    const trimmedName = projectName.trim()
+    if (!trimmedNo || !trimmedName) {
+      setError('Project No. and Project Name are required.')
+      return
+    }
     setLoading(true)
     setError(null)
-    const payload: ProjectInput = { project_no: projectNo, project_name: projectName, is_active: isActive }
+    const payload: ProjectInput = { project_no: trimmedNo, project_name: trimmedName, is_active: isActive }
     const { error } = project
       ? await updateProject(project.id, payload)
       : await createProject(payload)
