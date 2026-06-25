@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx'
 import { save } from '@tauri-apps/plugin-dialog'
 import { writeFile } from '@tauri-apps/plugin-fs'
 import { writeText } from '@tauri-apps/plugin-clipboard-manager'
-import { fetchArchivedTimesheetsInRange, searchArchived, indexMissingEmbeddings, type ArchivedMatch } from '../services/timesheets'
+import { fetchArchivedTimesheetsInRange, searchArchived, keywordSearchArchived, indexMissingEmbeddings, type ArchivedMatch } from '../services/timesheets'
 import { ExpandableText } from '../components/ExpandableText'
 import type { TimesheetWithProject } from '../types'
 
@@ -58,9 +58,12 @@ export function Archived() {
     }
     setSearching(true)
     setError(null)
-    const { data, error } = await searchArchived(q)
+    // Single-token / very short queries (acronyms, codes like "SIT") → keyword ILIKE;
+    // multi-word phrases → semantic vector search.
+    const keyword = q.length <= 4 || !/\s/.test(q)
+    const { data, error } = keyword ? await keywordSearchArchived(q) : await searchArchived(q)
     if (error) setError(error.message)
-    else setResults((data as ArchivedMatch[]) ?? [])
+    else setResults(((data as ArchivedMatch[]) ?? []).map((r) => ({ ...r, similarity: r.similarity ?? null })))
     setSearching(false)
   }
 
@@ -249,7 +252,7 @@ export function Archived() {
                         <span class="text-base-content/30">—</span>
                       )}
                     </td>
-                    <td class="whitespace-nowrap text-sm opacity-60">{Math.round(r.similarity * 100)}%</td>
+                    <td class="whitespace-nowrap text-sm opacity-60">{r.similarity == null ? 'keyword' : `${Math.round(r.similarity * 100)}%`}</td>
                   </tr>
                 ))}
               </tbody>

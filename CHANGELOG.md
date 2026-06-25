@@ -3,6 +3,11 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.8] - 2026-06-25
+
+- Archived search is now hybrid: short/acronym queries (e.g. "SIT") use keyword matching, while multi-word phrases use semantic vector search — fixing irrelevant results like "SICK leave" matching "SIT".
+- Friendlier login error when a non-provisioned email requests a setup code ("No account found for this email. Ask your admin to add you first.").
+
 ## [3.1.7] - 2026-06-25
 
 - Added a first-time account setup flow on the login screen: provisioned users can email themselves a 6-digit code and choose their own password (no web build or deep linking required).

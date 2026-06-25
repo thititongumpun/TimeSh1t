@@ -9,7 +9,7 @@ export type ArchivedMatch = {
   description: string
   ai_summary: string | null
   date_memo: string
-  similarity: number
+  similarity: number | null // null for keyword (ILIKE) hits — there's no cosine score
 }
 
 export async function fetchTimesheets(filters: TimesheetFilters) {
@@ -51,6 +51,22 @@ export async function searchArchived(query: string, matchCount = 20) {
     query_embedding: embedding,
     match_count: matchCount,
   })
+}
+
+// Keyword search over archived rows for short/acronym queries (e.g. "SIT"), where
+// dense embeddings are noise. Plain ILIKE on description + summary, newest first.
+// ponytail: term goes raw into the .or filter — a literal comma/paren would break it;
+// fine for single-token codes, escape if free-text keyword search is ever added.
+export async function keywordSearchArchived(term: string, matchCount = 20) {
+  const userId = await getAuthenticatedUserId()
+  const like = `%${term}%`
+  return supabase
+    .from('archived_timesheets')
+    .select('id, description, ai_summary, date_memo')
+    .eq('user_id', userId)
+    .or(`description.ilike.${like},ai_summary.ilike.${like}`)
+    .order('date_memo', { ascending: false })
+    .limit(matchCount)
 }
 
 // One-time / re-runnable backfill: embed every archived row that has no embedding yet.

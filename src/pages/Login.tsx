@@ -25,8 +25,12 @@ export function Login() {
     setLoading(true)
     setError(null)
     const { error } = await sendSetupCode(email)
-    if (error) setError(error.message)
-    else {
+    if (error) {
+      // shouldCreateUser:false → unknown emails get "Signups not allowed for otp"
+      setError(/signups? not allowed/i.test(error.message)
+        ? 'No account found for this email. Ask your admin to add you first.'
+        : error.message)
+    } else {
       setCodeSent(true)
       setInfo('Check your email for a 6-digit code.')
     }
