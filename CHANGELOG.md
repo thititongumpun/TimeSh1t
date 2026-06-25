@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.6] - 2026-06-25
+
+- Added a monthly timesheet-cutoff warning in the sidebar (above the online list) that appears on the 25th of each month.
+
 ## [3.1.5] - 2026-06-25
 
 - Copy-success feedback now shows as a non-intrusive bottom-right toast on the timesheets and archived pages, instead of an inline banner that shifted the table layout.

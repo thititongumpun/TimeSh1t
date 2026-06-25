@@ -171,6 +171,13 @@ export function Sidebar() {
           </li>
         </ul>
       </nav>
+      {new Date().getDate() === 25 && (
+        <div class="px-3 pb-2">
+          <div class="alert alert-warning px-3 py-2 text-xs" role="alert">
+            <span>Timesheet cutoff is today — submit yours before end of day.</span>
+          </div>
+        </div>
+      )}
       <div class="px-3 pb-1">
         <div class="flex items-center gap-2 px-2 py-1 text-sm opacity-80">
           <span class="inline-block h-2 w-2 rounded-full bg-success" />
