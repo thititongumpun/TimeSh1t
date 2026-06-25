@@ -156,6 +156,13 @@ export function Archived() {
 
   return (
     <div>
+      {copiedId && (
+        <div class="toast toast-end toast-bottom z-50">
+          <div class="alert alert-success" role="status">
+            <span>AI summary copied.</span>
+          </div>
+        </div>
+      )}
       <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
         <h1 class="text-2xl font-bold">Archived</h1>
         <div class="flex flex-wrap items-end gap-2">

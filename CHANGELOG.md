@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.5] - 2026-06-25
+
+- Copy-success feedback now shows as a non-intrusive bottom-right toast on the timesheets and archived pages, instead of an inline banner that shifted the table layout.
+
 ## [3.1.4] - 2026-06-25
 
 - Added a quick-copy AI summary button next to the row actions in the timesheets table.

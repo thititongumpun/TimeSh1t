@@ -196,8 +196,10 @@ export function Home() {
         </div>
       )}
       {actionMessage && (
-        <div class="alert alert-success mb-4" role="status">
-          <span>{actionMessage}</span>
+        <div class="toast toast-end toast-bottom z-50">
+          <div class="alert alert-success" role="status">
+            <span>{actionMessage}</span>
+          </div>
         </div>
       )}
       <TimesheetFilters filters={filters} projects={projects} onChange={setFilters} />
