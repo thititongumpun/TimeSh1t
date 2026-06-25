@@ -27,6 +27,32 @@ Example output:
 - Produce SIT negative (FAIL) test cases for HISCUH/HISRCC clients.
 `
 
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+// Deterministic guard: the model sometimes truncates a back-to-back tag run like
+// [IMP][PersonnelCost] down to a prefix ([IMP]). Restore every original run verbatim
+// so bracket tags are never altered, regardless of what the model returned.
+// ponytail: only repairs truncated multi-tag runs; a fully-dropped single tag isn't
+// re-inserted (no anchor to know where) — fix in prompt if that ever shows up.
+export function restoreBracketTags(original: string, summary: string): string {
+  const runs = original.match(/(?:\[[^\]]+\])+/g) ?? []
+  let out = summary
+  for (const run of runs) {
+    if (out.includes(run)) continue // run survived intact
+    const tags = run.match(/\[[^\]]+\]/g)! // e.g. ["[IMP]", "[PersonnelCost]"]
+    // Find the longest surviving prefix of the run and expand it back to the full run.
+    for (let n = tags.length - 1; n >= 1; n--) {
+      const prefix = tags.slice(0, n).join('')
+      const re = new RegExp(escapeRegExp(prefix) + '(?!\\s*\\[)') // not already followed by another tag
+      if (re.test(out)) {
+        out = out.replace(re, run)
+        break
+      }
+    }
+  }
+  return out
+}
+
 interface AiBinding {
   run(
     model: string,
@@ -128,7 +154,7 @@ export default {
         return json({ error: 'Cloudflare AI returned an empty summary.' }, 502)
       }
 
-      return json({ summary })
+      return json({ summary: restoreBracketTags(description, summary) })
     } catch (err) {
       // ponytail: surface the real reason so the next failure isn't blind
       const reason = err instanceof Error ? err.message : 'unknown error'
