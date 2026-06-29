@@ -7,6 +7,11 @@ import { writeText } from '@tauri-apps/plugin-clipboard-manager'
 // `local` scope binds the MCP to one directory, and the app's spawned `claude` can't see it.
 const MCP_ADD_CMD = 'claude mcp add --scope user --transport sse atlassian https://mcp.atlassian.com/v1/sse'
 
+// Canned query for the "My open tasks" button: everything assigned to me that isn't finished.
+const MY_TASKS_PROMPT =
+  'List my unfinished Jira issues using JQL: assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC. ' +
+  'Show each on one line as "KEY — summary — status (priority)". If there are none, say so. No preamble.'
+
 // null = still checking; otherwise one of the Rust sentinels.
 type Status = null | 'no_cli' | 'no_jira_mcp' | 'ready'
 
@@ -30,10 +35,9 @@ export function JiraAssistant() {
   }
   useEffect(() => { checkStatus() }, [])
 
-  async function run(e: Event) {
-    e.preventDefault()
-    const p = prompt.trim()
-    if (!p) return
+  async function execute(p: string) {
+    const trimmed = p.trim()
+    if (!trimmed) return
     setLoading(true)
     setError(null)
     setOutput('')
@@ -42,7 +46,7 @@ export function JiraAssistant() {
       setProgress((cur) => [...cur, ev.payload])
     })
     try {
-      setOutput(await invoke<string>('ask_claude', { prompt: p }))
+      setOutput(await invoke<string>('ask_claude', { prompt: trimmed }))
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg === 'CLAUDE_NOT_INSTALLED' ? 'Claude Code is not installed on this PC.' : msg)
@@ -50,6 +54,11 @@ export function JiraAssistant() {
       unlisten()
       setLoading(false)
     }
+  }
+
+  function run(e: Event) {
+    e.preventDefault()
+    execute(prompt)
   }
 
   async function copyCmd() {
@@ -149,9 +158,19 @@ export function JiraAssistant() {
               value={prompt}
               onInput={(e) => setPrompt(e.currentTarget.value)}
             />
-            <button type="submit" class="btn btn-primary w-fit" disabled={loading || !prompt.trim()}>
-              {loading ? <span class="loading loading-spinner loading-xs" /> : 'Run'}
-            </button>
+            <div class="flex gap-2">
+              <button type="submit" class="btn btn-primary w-fit" disabled={loading || !prompt.trim()}>
+                {loading ? <span class="loading loading-spinner loading-xs" /> : 'Run'}
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline w-fit"
+                disabled={loading}
+                onClick={() => execute(MY_TASKS_PROMPT)}
+              >
+                My open tasks
+              </button>
+            </div>
           </form>
 
           {loading && (

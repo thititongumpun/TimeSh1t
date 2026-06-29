@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { getAuthenticatedUserId } from './auth-user'
-import { summarizeDescription, embedText } from './cloudflare-ai'
+import { summarizeDescription, embedText, summarizeMonth } from './cloudflare-ai'
 import type { TimesheetFilters, TimesheetInput } from '../types'
 
 // Row shape returned by the match_archived_timesheets RPC (subset of columns + similarity score).
@@ -104,6 +104,42 @@ export async function indexMissingEmbeddings(
   }
 
   return { indexed }
+}
+
+// Cached per-month AI digest. Archived months are immutable, so a digest is generated
+// once on first view and reused; entry_count guards a still-filling month. `force` regenerates.
+// Returns the summary text; throws if the worker fails and there's no usable cache.
+export async function getOrCreateMonthlySummary(
+  year: number,
+  month: number, // 1-12
+  entries: { description: string; ai_summary: string | null }[],
+  { force = false }: { force?: boolean } = {},
+): Promise<string> {
+  const userId = await getAuthenticatedUserId()
+
+  if (!force) {
+    const { data: cached } = await supabase
+      .from('monthly_summaries')
+      .select('summary, entry_count')
+      .eq('user_id', userId)
+      .eq('year', year)
+      .eq('month', month)
+      .maybeSingle()
+    if (cached && cached.entry_count === entries.length) return cached.summary
+  }
+
+  const text = entries.map((e) => e.ai_summary || e.description).filter(Boolean).join('\n\n')
+  const summary = await summarizeMonth(text)
+
+  const { error } = await supabase
+    .from('monthly_summaries')
+    .upsert(
+      { user_id: userId, year, month, summary, entry_count: entries.length, generated_at: new Date().toISOString() },
+      { onConflict: 'user_id,year,month' },
+    )
+  if (error) throw new Error(error.message)
+
+  return summary
 }
 
 export async function createTimesheet(data: TimesheetInput) {

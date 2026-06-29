@@ -169,6 +169,11 @@ export function Sidebar() {
               Jira
             </a>
           </li>
+          <li>
+            <a href="/timeline" class={url.startsWith('/timeline') ? 'active' : ''}>
+              Timeline
+            </a>
+          </li>
         </ul>
       </nav>
       {new Date().getDate() === 25 && (

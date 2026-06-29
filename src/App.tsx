@@ -11,6 +11,7 @@ import { Holiday } from './pages/Holiday'
 import { Notes } from './pages/Notes'
 import { Ask } from './pages/Ask'
 import { JiraAssistant } from './pages/JiraAssistant'
+import { Timeline } from './pages/Timeline'
 import { Layout } from './components/Layout'
 
 export function App() {
@@ -55,6 +56,7 @@ export function App() {
           <Route path="/notes" component={Notes} />
           <Route path="/ask" component={Ask} />
           <Route path="/jira" component={JiraAssistant} />
+          <Route path="/timeline" component={Timeline} />
         </Router>
       </Layout>
     </LocationProvider>

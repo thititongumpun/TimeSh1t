@@ -3,6 +3,15 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.10] - 2026-06-29
+
+- Added a **Timeline** sidebar tab: archived timesheets laid out as a vertical, side-alternating timeline by month, each month showing an AI digest grouped by project tag. Digests are cached per month in a new `monthly_summaries` table (generated once on first view, with a per-month "Regenerate" button).
+- Jira page: added a **My open tasks** button next to Run that lists your unfinished issues (assignee = currentUser, status not Done).
+
+## [3.1.9] - 2026-06-29
+
+- Jira setup now detects a Claude CLI installed via nvm/Homebrew when launched from the GUI app (PATH no longer needs manual linking in common cases).
+
 ## [3.1.8] - 2026-06-25
 
 - Archived search is now hybrid: short/acronym queries (e.g. "SIT") use keyword matching, while multi-word phrases use semantic vector search — fixing irrelevant results like "SICK leave" matching "SIT".

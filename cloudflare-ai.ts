@@ -4,6 +4,13 @@ const EMBED_MODEL = '@cf/baai/bge-m3' // 1024-dim, multilingual (Thai + English)
 const CHAT_SYSTEM_PROMPT = `You answer questions about a user's past work using ONLY the timesheet entries provided.
 If the entries do not contain the answer, say you do not have that information. Be concise.`
 
+const MONTHLY_SYSTEM_PROMPT = `You write a concise monthly work digest from the timesheet entries provided for one month.
+Rules:
+- Group the digest by square-bracket project tag, e.g. [IMP], [INVX], [PersonnelCost]. Keep every tag exactly as-is; never invent, drop, merge, or alter a tag.
+- Each tag sits alone on its own line, followed by a few "- " bullet lines summarising that tag's work for the month. Merge duplicates; keep it short.
+- If an entry has no tag, group it under a "- " bullet beneath an "[Other]" heading.
+- Return ONLY the digest. No preamble, no closing remarks.`
+
 const SYSTEM_PROMPT = `You are a technical writing editor. Your job is to fix grammar, spelling, and technical terminology in the given text, then format it.
 Rules:
 - Do NOT modify any content inside square brackets, e.g. [IMP], [INVX], [PersonelCost]. Keep the tag exactly as-is if multiple tag keep the exactly as-is.
@@ -128,6 +135,26 @@ export default {
         const answer = result.response?.trim()
         if (!answer) return json({ error: 'Cloudflare AI returned an empty answer.' }, 502)
         return json({ response: answer })
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : 'unknown error'
+        return json({ error: `Cloudflare AI request failed: ${reason}` }, 502)
+      }
+    }
+
+    // --- monthly: { task: 'monthly', text } -> { summary } (tag-grouped digest of one month) ---
+    if (task === 'monthly') {
+      const text = typeof body.text === 'string' ? body.text.trim() : ''
+      if (!text) return json({ error: 'Text is required.' }, 400)
+      try {
+        const result = await env.AI.run(MODEL, {
+          messages: [
+            { role: 'system', content: MONTHLY_SYSTEM_PROMPT },
+            { role: 'user', content: text },
+          ],
+        })
+        const summary = result.response?.trim()
+        if (!summary) return json({ error: 'Cloudflare AI returned an empty monthly summary.' }, 502)
+        return json({ summary: restoreBracketTags(text, summary) })
       } catch (err) {
         const reason = err instanceof Error ? err.message : 'unknown error'
         return json({ error: `Cloudflare AI request failed: ${reason}` }, 502)

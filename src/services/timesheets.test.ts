@@ -4,6 +4,7 @@ const mockFrom = vi.hoisted(() => vi.fn())
 const mockRpc = vi.hoisted(() => vi.fn())
 const mockSummarizeDescription = vi.hoisted(() => vi.fn())
 const mockEmbedText = vi.hoisted(() => vi.fn())
+const mockSummarizeMonth = vi.hoisted(() => vi.fn())
 const mockGetAuthenticatedUserId = vi.hoisted(() => vi.fn())
 vi.mock('../lib/supabase', () => ({
   supabase: { from: mockFrom, rpc: mockRpc },
@@ -11,6 +12,7 @@ vi.mock('../lib/supabase', () => ({
 vi.mock('./cloudflare-ai', () => ({
   summarizeDescription: mockSummarizeDescription,
   embedText: mockEmbedText,
+  summarizeMonth: mockSummarizeMonth,
 }))
 vi.mock('./auth-user', () => ({
   getAuthenticatedUserId: mockGetAuthenticatedUserId,
@@ -22,6 +24,7 @@ import {
   updateTimesheet,
   deleteTimesheet,
   searchArchived,
+  getOrCreateMonthlySummary,
 } from './timesheets'
 import type { TimesheetFilters } from '../types'
 
@@ -36,6 +39,8 @@ function makeChain(result: any) {
     lte: vi.fn().mockReturnThis(),
     order: vi.fn().mockResolvedValue(result),
     single: vi.fn().mockResolvedValue(result),
+    maybeSingle: vi.fn().mockResolvedValue(result),
+    upsert: vi.fn().mockResolvedValue(result),
   }
   return chain
 }
@@ -52,6 +57,7 @@ describe('timesheets service', () => {
     vi.clearAllMocks()
     mockSummarizeDescription.mockResolvedValue('AI-generated summary')
     mockEmbedText.mockResolvedValue([0.1, 0.2, 0.3])
+    mockSummarizeMonth.mockResolvedValue('Monthly digest')
     mockGetAuthenticatedUserId.mockResolvedValue('user-1')
   })
 
@@ -175,6 +181,46 @@ describe('timesheets service', () => {
 
     expect(mockSummarizeDescription).not.toHaveBeenCalled()
     expect(chain.insert).not.toHaveBeenCalled()
+  })
+
+  const monthEntries = [
+    { description: 'a', ai_summary: 'sum a' },
+    { description: 'b', ai_summary: null },
+  ]
+
+  it('getOrCreateMonthlySummary returns cached summary without calling the worker when count matches', async () => {
+    const chain = makeChain({ data: { summary: 'cached digest', entry_count: 2 }, error: null })
+    mockFrom.mockReturnValue(chain)
+
+    const result = await getOrCreateMonthlySummary(2026, 3, monthEntries)
+
+    expect(result).toBe('cached digest')
+    expect(mockSummarizeMonth).not.toHaveBeenCalled()
+    expect(chain.upsert).not.toHaveBeenCalled()
+  })
+
+  it('getOrCreateMonthlySummary regenerates and upserts when cached count is stale', async () => {
+    const chain = makeChain({ error: null })
+    chain.maybeSingle.mockResolvedValue({ data: { summary: 'old', entry_count: 1 }, error: null })
+    mockFrom.mockReturnValue(chain)
+
+    const result = await getOrCreateMonthlySummary(2026, 3, monthEntries)
+
+    expect(result).toBe('Monthly digest')
+    expect(mockSummarizeMonth).toHaveBeenCalledWith('sum a\n\nb')
+    expect(chain.upsert).toHaveBeenCalled()
+  })
+
+  it('getOrCreateMonthlySummary with force skips the cache lookup and regenerates', async () => {
+    const chain = makeChain({ error: null })
+    mockFrom.mockReturnValue(chain)
+
+    const result = await getOrCreateMonthlySummary(2026, 3, monthEntries, { force: true })
+
+    expect(result).toBe('Monthly digest')
+    expect(chain.maybeSingle).not.toHaveBeenCalled()
+    expect(mockSummarizeMonth).toHaveBeenCalled()
+    expect(chain.upsert).toHaveBeenCalled()
   })
 
   it('updateTimesheet applies update by id', async () => {

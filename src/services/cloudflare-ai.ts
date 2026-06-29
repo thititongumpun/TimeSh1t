@@ -54,6 +54,21 @@ export async function summarizeDescription(description: string) {
   return summary
 }
 
+// Tag-grouped digest of one month's archived entries.
+export async function summarizeMonth(text: string): Promise<string> {
+  const body = await callWorker({ task: 'monthly', text })
+
+  const summary = getMessage(body.summary)
+    || getMessage(body.response)
+    || getMessage(body.output)
+
+  if (!summary) {
+    throw new Error('Cloudflare AI returned an empty monthly summary.')
+  }
+
+  return summary
+}
+
 // bge-m3 embedding (1024-dim) for semantic search / autofill / RAG retrieval.
 export async function embedText(text: string): Promise<number[]> {
   const body = await callWorker({ task: 'embed', text })
