@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.11] - 2026-06-30
+
+- Holiday page is now an interactive **calendar** (DaisyUI-styled Vanilla Calendar Pro) that highlights holiday dates with name tooltips, replacing the embedded PDF viewer. Dates are loaded at runtime from a remote JSON file, so the list can be updated without rebuilding the app.
+
 ## [3.1.10] - 2026-06-29
 
 - Added a **Timeline** sidebar tab: archived timesheets laid out as a vertical, side-alternating timeline by month, each month showing an AI digest grouped by project tag. Digests are cached per month in a new `monthly_summaries` table (generated once on first view, with a per-month "Regenerate" button).
