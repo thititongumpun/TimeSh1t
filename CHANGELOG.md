@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.14] - 2026-06-30
+
+- Holiday page now lists all holidays next to the calendar (date + name), so the dates are clearly visible regardless of the month shown; the calendar still marks each holiday day.
+
 ## [3.1.13] - 2026-06-30
 
 - Fixed the Holiday calendar rendering blank: bundled the calendar library's own stylesheet (DaisyUI v4 does not auto-style it).
