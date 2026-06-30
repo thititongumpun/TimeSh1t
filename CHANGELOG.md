@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.12] - 2026-06-30
+
+- Fixed the Holiday calendar failing to load in the desktop app: the holiday data URL now points directly at the raw gist host (no cross-origin redirect, which the webview rejected).
+
 ## [3.1.11] - 2026-06-30
 
 - Holiday page is now an interactive **calendar** (DaisyUI-styled Vanilla Calendar Pro) that highlights holiday dates with name tooltips, replacing the embedded PDF viewer. Dates are loaded at runtime from a remote JSON file, so the list can be updated without rebuilding the app.
