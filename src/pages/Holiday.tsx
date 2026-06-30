@@ -34,13 +34,13 @@ export function Holiday() {
           <span>{error}</span>
         </div>
       )}
-      {loading ? (
+      {loading && (
         <div class="flex justify-center py-8">
           <span class="loading loading-spinner loading-md" />
         </div>
-      ) : (
-        <div ref={ref} />
       )}
+      {/* always mounted so ref.current exists when fetch resolves and inits the calendar */}
+      <div ref={ref} />
     </div>
   )
 }

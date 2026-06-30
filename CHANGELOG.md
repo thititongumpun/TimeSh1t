@@ -3,6 +3,10 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.16] - 2026-06-30
+
+- Fixed the Holiday page showing a blank/white screen: the calendar mount node is now always rendered, so it exists when the holiday data finishes loading and the calendar initializes.
+
 ## [3.1.15] - 2026-06-30
 
 - Holiday calendar now highlights every holiday date from the gist and shows the holiday name when you click/hover the date. Removed the separate holiday list.
