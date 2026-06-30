@@ -1,3 +1,8 @@
+export interface Holiday {
+  date: string // ISO date, e.g. "2026-01-01"
+  name: string
+}
+
 export interface Project {
   id: string
   project_no: string

@@ -1,17 +1,28 @@
-import { useState, useEffect } from 'preact/hooks'
-import { getLatestHolidayPdfUrl } from '../services/holidays'
+import { useRef, useEffect, useState } from 'preact/hooks'
+import { Calendar } from 'vanilla-calendar-pro'
+import { fetchHolidays } from '../services/holidays'
 
 export function Holiday() {
-  const [url, setUrl] = useState<string | null>(null)
+  const ref = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    getLatestHolidayPdfUrl().then(({ url, error }) => {
-      if (error) setError(error.message)
-      else setUrl(url)
+    let cal: Calendar | null = null
+    fetchHolidays().then(({ data, error }) => {
       setLoading(false)
+      if (error) return setError(error.message)
+      const popups = Object.fromEntries(
+        (data ?? []).map((h) => [
+          h.date,
+          { modifier: 'bg-error text-error-content rounded-full', html: h.name },
+        ])
+      )
+      if (!ref.current) return
+      cal = new Calendar(ref.current, { popups })
+      cal.init()
     })
+    return () => cal?.destroy()
   }, [])
 
   return (
@@ -22,19 +33,12 @@ export function Holiday() {
           <span>{error}</span>
         </div>
       )}
-      {loading ? (
+      {loading && (
         <div class="flex justify-center py-8">
           <span class="loading loading-spinner loading-md" />
         </div>
-      ) : url ? (
-        <iframe
-          src={`https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`}
-          class="w-full h-[80vh] rounded-lg border border-base-300"
-          title="Holiday calendar"
-        />
-      ) : (
-        <p class="text-base-content/50 py-8 text-center">No holiday calendar uploaded yet.</p>
       )}
+      <div ref={ref} />
     </div>
   )
 }
