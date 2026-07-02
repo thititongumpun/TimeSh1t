@@ -2,6 +2,7 @@ import { useEffect } from 'preact/hooks'
 import { LocationProvider, Router, Route } from 'preact-iso'
 import { supabase } from './lib/supabase'
 import { currentUser, authLoading } from './store/auth'
+import { refreshUser } from './services/auth'
 import { startPresence, stopPresence } from './store/presence'
 import { Login } from './pages/Login'
 import { Home } from './pages/Home'
@@ -26,6 +27,8 @@ export function App() {
           name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? (user.email ?? 'unknown').split('@')[0],
           avatar: user.user_metadata?.avatar_url,
         })
+        // defer to dodge the Supabase deadlock warning about awaiting inside this callback
+        setTimeout(refreshUser, 0)
       } else {
         stopPresence()
       }

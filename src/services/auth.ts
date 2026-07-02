@@ -43,6 +43,14 @@ export async function changePassword(email: string, currentPassword: string, new
   return { data, error }
 }
 
+// onAuthStateChange gives the cached session (stale user_metadata). getUser() hits
+// the server for the latest metadata (e.g. avatar edited in the Supabase dashboard).
+export async function refreshUser() {
+  const { data, error } = await supabase.auth.getUser()
+  if (!error && data.user) currentUser.value = data.user
+  return { data, error }
+}
+
 export async function getSession() {
   const { data, error } = await supabase.auth.getSession()
   if (!error && data.session) currentUser.value = data.session.user

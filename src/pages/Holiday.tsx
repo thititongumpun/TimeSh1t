@@ -2,11 +2,13 @@ import { useRef, useEffect, useState } from 'preact/hooks'
 import { Calendar } from 'vanilla-calendar-pro'
 import 'vanilla-calendar-pro/styles/index.css' // DaisyUI v4 doesn't auto-style .vc (that's v5), so ship the lib's own CSS
 import { fetchHolidays } from '../services/holidays'
+import type { Holiday as HolidayType } from '../types'
 
 export function Holiday() {
   const ref = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [holidays, setHolidays] = useState<HolidayType[]>([])
 
   useEffect(() => {
     let cal: Calendar | null = null
@@ -14,6 +16,7 @@ export function Holiday() {
       setLoading(false)
       if (error) return setError(error.message)
       const list = data ?? []
+      setHolidays(list)
       if (!ref.current) return
       cal = new Calendar(ref.current, {
         // highlight every gist date (adds data-vc-date-holiday → styled by the lib)
@@ -41,6 +44,17 @@ export function Holiday() {
       )}
       {/* always mounted so ref.current exists when fetch resolves and inits the calendar */}
       <div ref={ref} />
+
+      {holidays.length > 0 && (
+        <ul class="menu bg-base-200 rounded-box mt-4 w-full max-w-md">
+          {holidays.map((h) => (
+            <li key={h.date} class="flex-row justify-between px-2 py-1">
+              <span class="font-mono text-sm opacity-70">{h.date}</span>
+              <span>{h.name}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

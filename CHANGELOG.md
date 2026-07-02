@@ -3,6 +3,11 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [3.1.18] - 2026-07-02
+
+- Sidebar avatar now refreshes from the server on load, so avatar/profile edits made in the Supabase dashboard show up (previously only the cached session's stale metadata was read).
+- Holiday page now lists all holidays (date + name) below the calendar for easier scanning.
+
 ## [3.1.17] - 2026-06-30
 
 - Jira tab: updated the MCP setup command to the new Streamable HTTP endpoint (`--transport http` / `.../v1/mcp`), since Atlassian deprecated the HTTP+SSE endpoint after 30 June 2026.
