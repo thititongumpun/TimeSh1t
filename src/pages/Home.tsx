@@ -306,6 +306,15 @@ export function Home() {
             Msync fill log ({fillLog.length} run{fillLog.length === 1 ? '' : 's'})
           </summary>
           <div class="collapse-content space-y-3 text-sm">
+            <button
+              class="btn btn-ghost btn-xs text-error"
+              onClick={() => {
+                localStorage.removeItem('appsmith_fill_log')
+                setFillLog([])
+              }}
+            >
+              Clear log
+            </button>
             {fillLog.map((run) => (
               <div>
                 <div class="font-medium">
