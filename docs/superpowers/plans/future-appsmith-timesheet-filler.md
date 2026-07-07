@@ -1,6 +1,10 @@
 # Plan: "Send selected timesheets to Appsmith" auto-filler
 
-> Status: **deferred / future** (planned 2026-06-25, not yet implemented).
+> Status: **implemented** (2026-07-07). Live-tuned notes: msync wraps the Appsmith app in a
+> cross-origin iframe (script injected into all frames, activates on the appsmith host);
+> selectors use `t--widget-<name>` classes; flow is project → date → task (task last, or the
+> date change clears it); task rows containing "IMP" are preferred; Duo's "Update macOS" nag
+> is auto-skipped; completion signals back via URL-hash poll and marks the sent rows done.
 
 ## Context
 
@@ -17,7 +21,7 @@ Decisions locked in with the user:
 - **Selectors:** Appsmith's DOM selectors will be **tuned live** during implementation, so the
   fill script isolates them in one clearly-marked, editable block.
 
-Outcome: select rows → click "Send to Appsmith" → a webview opens on the Appsmith form →
+Outcome: select rows → click "Send to Msync" → a webview opens on the Appsmith form →
 click a floating "Fill N entries" button → entries get filled and added automatically.
 
 ## Why this shape (lazy rationale)
@@ -38,7 +42,7 @@ click a floating "Fill N entries" button → entries get filled and added automa
   then:
   ```rust
   tauri::WebviewWindowBuilder::new(&app, "appsmith", tauri::WebviewUrl::External(url.parse().map_err(|e| ...)?))
-      .title("Appsmith filler")
+      .title("Msync")
       .inner_size(1200.0, 850.0)
       .initialization_script(&script)
       .build()
@@ -49,7 +53,7 @@ click a floating "Fill N entries" button → entries get filled and added automa
   (check `app.get_webview_window("appsmith")`).
 
 ### 2. `src/pages/Home.tsx` — button + handler
-- Add a **"Send to Appsmith"** button in the existing selection banner (line ~206, next to
+- Add a **"Send to Msync"** button in the existing selection banner (line ~206, next to
   "Mark done"). Guard it with the **`isTauri`** check already used in `Archived.tsx` so it only
   shows in the desktop app.
 - Handler `handleSendToAppsmith()`:
@@ -90,7 +94,7 @@ only if a real run shows flakiness.
 ## Verification (end-to-end, live tuning)
 
 1. `npm run tauri dev`.
-2. On Home, select a couple of timesheet rows → click **Send to Appsmith**.
+2. On Home, select a couple of timesheet rows → click **Send to Msync**.
 3. The Appsmith webview opens (already logged in). Right-click → Inspect to open devtools.
 4. Navigate to the entry form; click the injected **"Fill N entries"** button.
 5. Iterate: read failing selectors in devtools, edit the SELECTORS block in `lib.rs`, restart

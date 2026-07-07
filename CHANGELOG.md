@@ -3,6 +3,14 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.0.0] - 2026-07-07
+
+- New: **Send to Msync** — select timesheet rows on Home and auto-fill them into the Msync (Appsmith) timesheet app. Opens Msync in a desktop webview with an injected filler: per entry it searches the project by code, sets the date, picks the task (prefers names containing "IMP"), fills the memo, and clicks Create. Hours stay at the form's 09:00–18:00 defaults.
+- Entries actually created in Msync are automatically marked done in T1meSh1t (partial-failure aware: if a batch stops midway, only the entries that landed are marked).
+- New: **Msync fill log** on Home — a collapsible history of the last 50 fill runs (timestamp, created count, and each entry's date/project/description), stored locally.
+- Duo SSO's "Update macOS" nag page is skipped automatically when the Msync window opens.
+- Desktop-only feature; the button is hidden in the web build.
+
 ## [3.1.20] - 2026-07-02
 
 - Fixed Windows auto-update looping after 3.1.19: reverted the installer `productName` back to `TimeSh1t`. NSIS keys the install location and product identity off `productName`, so the 3.1.19 rename made updates install into a new folder while the old version kept launching. The window title/UI branding stays **T1meSh1t**.

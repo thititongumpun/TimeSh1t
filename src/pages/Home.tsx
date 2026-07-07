@@ -5,10 +5,25 @@ import { listen } from '@tauri-apps/api/event'
 import { fetchTimesheets, deleteTimesheet, updateTimesheet, updateTimesheets } from '../services/timesheets'
 import { fetchActiveProjects } from '../services/projects'
 import { confirmDialog } from '../lib/confirm'
+import { APPSMITH_URL } from '../lib/appsmith'
 import { TimesheetTable } from '../components/timesheets/TimesheetTable'
 import { TimesheetFilters } from '../components/timesheets/TimesheetFilters'
 import { TimesheetModal } from '../components/timesheets/TimesheetModal'
 import type { TimesheetWithProject, TimesheetFilters as Filters, Project } from '../types'
+
+const isTauri = '__TAURI_INTERNALS__' in window
+
+// One "Send to Appsmith" run: what landed in msync and when.
+type FillRun = {
+  at: string
+  filled: number
+  total: number
+  entries: { date: string; projectNo: string; description: string }[]
+}
+
+function readFillLog(): FillRun[] {
+  try { return JSON.parse(localStorage.getItem('appsmith_fill_log') ?? '[]') } catch { return [] }
+}
 
 // Local YYYY-MM-DD — toISOString() would shift to UTC and roll the date back a day in +07.
 function ymd(d: Date): string {
@@ -38,6 +53,7 @@ export function Home() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [fillLog, setFillLog] = useState<FillRun[]>(readFillLog)
 
   async function loadTimesheets() {
     setLoading(true)
@@ -173,6 +189,52 @@ export function Home() {
     loadTimesheets()
   }
 
+  // Opens Appsmith in a Tauri webview with a fill script injected (Rust command).
+  async function handleSendToAppsmith() {
+    // Same order as ROWS in the fill script, so "first n filled" maps back to these.
+    const sent = timesheets.filter((t) => selectedIds.has(t.id))
+    const rows = sent.map((t) => ({
+      date: t.date_memo, // raw ISO — the fill script formats it for the date picker
+      projectNo: t.projects?.project_no ?? '',
+      description: t.description,
+    }))
+    setActionMessage(null)
+    try {
+      await invoke('open_appsmith_filler', { url: APPSMITH_URL, rowsJson: JSON.stringify(rows) })
+      setActionMessage(`Appsmith opened with ${rows.length} entr${rows.length === 1 ? 'y' : 'ies'} — click "Fill" on the form page.`)
+      // Fired by Rust with the number of rows the fill script actually created in msync.
+      const unlisten = await listen<number>('appsmith-filled', async ({ payload: filled }) => {
+        unlisten()
+        const done = sent.slice(0, filled)
+        const run: FillRun = {
+          at: new Date().toISOString(),
+          filled: done.length,
+          total: sent.length,
+          entries: done.map((t) => ({
+            date: t.date_memo.slice(0, 10),
+            projectNo: t.projects?.project_no ?? '',
+            description: t.description,
+          })),
+        }
+        const log = [run, ...fillLog].slice(0, 50)
+        localStorage.setItem('appsmith_fill_log', JSON.stringify(log))
+        setFillLog(log)
+        if (done.length === 0) {
+          setError('Appsmith fill failed — no entries were created.')
+          return
+        }
+        const { error } = await updateTimesheets(done.map((t) => t.id), { is_complete: true })
+        if (error) setError(error.message)
+        else {
+          setActionMessage(`Appsmith: ${done.length}/${sent.length} entries created in msync — marked done.`)
+          loadTimesheets()
+        }
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
   function handleModalClose() {
     setModalOpen(false)
     setEditingTimesheet(null)
@@ -209,6 +271,11 @@ export function Home() {
           <button class="btn btn-primary btn-sm" onClick={handleMarkSelectedDone}>
             Mark done
           </button>
+          {isTauri && (
+            <button class="btn btn-secondary btn-sm" onClick={handleSendToAppsmith}>
+              Send to Msync
+            </button>
+          )}
           <button class="btn btn-ghost btn-sm" onClick={() => setSelectedIds(new Set())}>
             Clear
           </button>
@@ -232,6 +299,27 @@ export function Home() {
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
         />
+      )}
+      {isTauri && fillLog.length > 0 && (
+        <details class="collapse collapse-arrow bg-base-200 mt-6">
+          <summary class="collapse-title text-sm font-medium">
+            Msync fill log ({fillLog.length} run{fillLog.length === 1 ? '' : 's'})
+          </summary>
+          <div class="collapse-content space-y-3 text-sm">
+            {fillLog.map((run) => (
+              <div>
+                <div class="font-medium">
+                  {new Date(run.at).toLocaleString()} — {run.filled}/{run.total} created
+                </div>
+                <ul class="ml-5 list-disc opacity-70">
+                  {run.entries.map((e) => (
+                    <li>{e.date} · {e.projectNo} · {e.description}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
       {modalOpen && (
         <TimesheetModal

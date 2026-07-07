@@ -1,5 +1,5 @@
 use std::io::{BufRead, BufReader, Read};
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
 // A macOS .app launched from Finder/Dock inherits a bare PATH (/usr/bin:/bin:…) with no
 // nvm/Homebrew/npm-global dirs, so `claude` installed there is invisible. Rebuild PATH with
@@ -179,6 +179,209 @@ async fn claude_status() -> &'static str {
     .unwrap_or("no_cli")
 }
 
+// Injected into the Appsmith page. Plain DOM only — the remote webview gets no Tauri IPC.
+// __ROWS__ is replaced with the selected rows' JSON before injection.
+const APPSMITH_FILL_SCRIPT: &str = r#"
+(() => {
+  // Duo SSO interjects an "Update macOS" nag page — auto-click "Skip for now" when it shows.
+  (function autoSkipDuo() {
+    let tries = 60;
+    const t = setInterval(() => {
+      const el = [...document.querySelectorAll('a, button')]
+        .find((n) => n.textContent.trim() === 'Skip for now');
+      if (el) { el.click(); clearInterval(t); }
+      else if (--tries <= 0) clearInterval(t);
+    }, 500);
+  })();
+
+  // msync embeds the real Appsmith app in a cross-origin iframe; this script is injected
+  // into every frame and only activates inside the Appsmith one. Non-appsmith frames just
+  // relay the fill-done signal into the top frame's URL hash, which Rust polls (the webview
+  // has no Tauri IPC on purpose, and document.title does not reach the native window title).
+  if (!location.hostname.includes('appsmith')) {
+    window.addEventListener('message', (e) => {
+      if (typeof e.data === 'string' && e.data.indexOf('TIMESH1T_FILL_DONE:') === 0 && window.top === window) {
+        try { location.hash = 'timesh1t_done_' + e.data.split(':')[1]; } catch (err) {}
+      }
+    });
+    return;
+  }
+  const ROWS = __ROWS__;
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function waitFor(selector, timeoutMs = 10000) {
+    return new Promise((resolve, reject) => {
+      const t0 = Date.now();
+      const tick = () => {
+        const el = document.querySelector(selector);
+        if (el) return resolve(el);
+        if (Date.now() - t0 > timeoutMs) return reject(new Error('timeout waiting for ' + selector));
+        setTimeout(tick, 200);
+      };
+      tick();
+    });
+  }
+
+  // Appsmith inputs are React-controlled: assigning .value directly does not register.
+  // Use the native setter, then fire an 'input' event so React sees the change.
+  function setNativeValue(el, value) {
+    const proto = el instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // ===== SELECTORS — Appsmith widget names (t--widget-<name>), stable across builds =====
+  const SEL = {
+    createTimesheetBtn: '.t--widget-button32 button',                    // list page: "Create Timesheet"
+    projectTable: '.t--widget-table_create',                             // "Select a Project below"
+    projectSearch: '.t--widget-table_create input[type="search"]',
+    projectRow: '.t--widget-table_create .tbody .tr',
+    taskRow: '.t--widget-table_create_task .tbody .tr',                  // "Select a Task below"
+    dateInput: '.t--widget-datepicker1_start_date input',
+    memo: '.t--widget-memocopy textarea, .t--widget-memocopy input',
+    // bottom-right "Create" — only match once enabled (it stays disabled until the form is valid)
+    createBtn: '.t--widget-button6copy button:not([disabled]):not(.bp3-disabled)',
+  };
+  // Start/end hour selects default to 09:00/18:00 already — left untouched.
+  // ======================================================================================
+
+  // DD-MM-YYYY — matches what the picker displays; tune here if it expects another format.
+  function formatDate(iso) {
+    const d = new Date(iso);
+    const p = (n) => String(n).padStart(2, '0');
+    return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear();
+  }
+
+  // Prefer the task whose name includes 'IMP'; fall back to the first row.
+  // Click the cell, not the row wrapper — Appsmith only registers selection on the cell.
+  function clickTask() {
+    const rows = [...document.querySelectorAll(SEL.taskRow)];
+    const task = rows.find((r) => r.textContent.includes('IMP')) || rows[0];
+    if (task) (task.querySelector('.td') || task).click();
+  }
+
+  async function fillOne(row) {
+    // After a Create the app may land back on the list page — reopen the form if so.
+    if (!document.querySelector(SEL.projectTable)) {
+      (await waitFor(SEL.createTimesheetBtn)).click();
+      await waitFor(SEL.projectTable);
+      await sleep(800);
+    }
+    const search = await waitFor(SEL.projectSearch);
+    setNativeValue(search, row.projectNo);
+    await sleep(1000); // let the table filter
+    (await waitFor(SEL.projectRow)).click();
+    await sleep(1000); // task query runs after project selection
+    // Date BEFORE task — changing the date clears the task selection.
+    const dateInput = await waitFor(SEL.dateInput);
+    setNativeValue(dateInput, formatDate(row.date));
+    dateInput.dispatchEvent(new Event('blur', { bubbles: true }));
+    await sleep(600);
+    await waitFor(SEL.taskRow);
+    clickTask();
+    await sleep(400);
+    setNativeValue(await waitFor(SEL.memo), row.description);
+    await sleep(300);
+    // Create stays disabled if the task click didn't register — re-click the task and retry.
+    let create = null;
+    for (let attempt = 0; attempt < 3 && !create; attempt++) {
+      create = await waitFor(SEL.createBtn, 5000).catch(() => null);
+      if (!create) { clickTask(); await sleep(600); }
+    }
+    if (!create) throw new Error('Create never enabled — task selection not registering');
+    create.click();
+    await sleep(1500); // submit + page settle
+  }
+
+  function addButton() {
+    const btn = document.createElement('button');
+    btn.textContent = 'Fill ' + ROWS.length + ' entries';
+    Object.assign(btn.style, {
+      position: 'fixed', bottom: '20px', left: '20px', zIndex: 999999,
+      padding: '12px 18px', background: '#6419e6', color: '#fff', border: 'none',
+      borderRadius: '8px', fontSize: '14px', cursor: 'pointer',
+      boxShadow: '0 2px 8px rgba(0,0,0,.35)',
+    });
+    btn.onclick = async () => {
+      btn.disabled = true;
+      let filled = 0;
+      try {
+        for (let i = 0; i < ROWS.length; i++) {
+          btn.textContent = 'Filling ' + (i + 1) + '/' + ROWS.length + '…';
+          await fillOne(ROWS[i]);
+          filled++;
+          await sleep(400);
+        }
+        btn.textContent = 'Done — ' + ROWS.length + ' filled';
+      } catch (e) {
+        btn.textContent = 'Failed after ' + filled + ': ' + e.message;
+        console.error('[timesh1t filler]', e);
+      }
+      // Signal T1meSh1t how many entries landed (URL-hash back-channel) — sent even on
+      // partial failure so only the filled rows get marked done and logged.
+      try { window.top.postMessage('TIMESH1T_FILL_DONE:' + filled, '*'); } catch (e) {}
+      // If this frame IS the top (direct Appsmith URL, no msync wrapper), set the hash here.
+      if (window.top === window) { try { location.hash = 'timesh1t_done_' + filled; } catch (e) {} }
+      btn.disabled = false;
+    };
+    document.body.appendChild(btn);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addButton);
+  } else {
+    addButton();
+  }
+})();
+"#;
+
+// Open (or reopen) the Appsmith webview with the fill script injected. Rebuilding on every
+// call instead of focusing an existing window keeps ROWS in sync with the current selection.
+#[tauri::command]
+async fn open_appsmith_filler(app: tauri::AppHandle, url: String, rows_json: String) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("appsmith") {
+        w.destroy().map_err(|e| e.to_string())?;
+    }
+    let script = APPSMITH_FILL_SCRIPT.replace("__ROWS__", &rows_json);
+    tauri::WebviewWindowBuilder::new(
+        &app,
+        "appsmith",
+        tauri::WebviewUrl::External(url.parse().map_err(|e| format!("bad Appsmith URL: {e}"))?),
+    )
+    .title("Msync")
+    .inner_size(1200.0, 850.0)
+    .initialization_script_for_all_frames(&script)
+    .build()
+    .map_err(|e| e.to_string())?;
+
+    // ponytail: URL-hash polling is the IPC-free back-channel from the sandboxed webview.
+    // The fill script sets the top frame's hash to #timesh1t_done_<n> where n = rows filled
+    // (emitted even on partial failure, so only landed entries get marked done).
+    let handle = app.clone();
+    tauri::async_runtime::spawn_blocking(move || loop {
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        match handle.get_webview_window("appsmith") {
+            Some(w) => {
+                let filled = w.url().ok().and_then(|u| {
+                    let s = u.as_str();
+                    let rest = &s[s.find("timesh1t_done_")? + "timesh1t_done_".len()..];
+                    let digits: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+                    digits.parse::<u32>().ok()
+                });
+                if let Some(n) = filled {
+                    let _ = handle.emit("appsmith-filled", n);
+                    break;
+                }
+            }
+            None => break, // window closed without finishing
+        }
+    });
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -193,7 +396,7 @@ pub fn run() {
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, ask_claude, claude_status])
+        .invoke_handler(tauri::generate_handler![greet, ask_claude, claude_status, open_appsmith_filler])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
