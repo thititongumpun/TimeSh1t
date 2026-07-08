@@ -194,6 +194,18 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
     }, 500);
   })();
 
+  // Reuse path: when the window already exists (user stays logged in), Rust evals this in
+  // the top frame with fresh rows instead of rebuilding the window (which would force a
+  // full SSO re-login). Relays the rows to every frame; the Appsmith one picks them up.
+  window.__timesh1tSendRows = (rows) => {
+    try { location.hash = ''; } catch (e) {} // clear a stale done-signal from the last run
+    const msg = { type: 'TIMESH1T_ROWS', rows };
+    window.postMessage(msg, '*'); // covers the no-iframe case (direct Appsmith URL)
+    [...document.querySelectorAll('iframe')].forEach((f) => {
+      try { f.contentWindow.postMessage(msg, '*'); } catch (e) {}
+    });
+  };
+
   // msync embeds the real Appsmith app in a cross-origin iframe; this script is injected
   // into every frame and only activates inside the Appsmith one. Non-appsmith frames just
   // relay the fill-done signal into the top frame's URL hash, which Rust polls (the webview
@@ -207,6 +219,19 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
     return;
   }
   const ROWS = __ROWS__;
+  let fillBtn = null;
+
+  // Fresh rows arriving from a reused window (see __timesh1tSendRows above).
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'TIMESH1T_ROWS' && Array.isArray(e.data.rows)) {
+      ROWS.length = 0;
+      ROWS.push(...e.data.rows);
+      if (fillBtn) {
+        fillBtn.textContent = 'Fill ' + ROWS.length + ' entries';
+        fillBtn.disabled = false;
+      }
+    }
+  });
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -241,6 +266,14 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
     projectRow: '.t--widget-table_create .tbody .tr',
     taskRow: '.t--widget-table_create_task .tbody .tr',                  // "Select a Task below"
     dateInput: '.t--widget-datepicker1_start_date input',
+    startHour: '.t--widget-hour_start1copy',
+    startMinute: '.t--widget-minute_start1copy',
+    endHour: '.t--widget-hour_end1copy',
+    endMinute: '.t--widget-minute_end1copy',
+    // Appsmith select options render in a body-level portal, in a VIRTUALIZED list —
+    // only visible rows exist in the DOM, so setSelect filters before matching.
+    selectFilter: '.select-popover-wrapper input.bp3-input',
+    selectOption: '.select-popover-wrapper .menu-item-text',
     memo: '.t--widget-memocopy textarea, .t--widget-memocopy input',
     // bottom-right "Create" — only match once enabled (it stays disabled until the form is valid)
     createBtn: '.t--widget-button6copy button:not([disabled]):not(.bp3-disabled)',
@@ -255,12 +288,54 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
     return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear();
   }
 
+  // Open an Appsmith select widget and click the option with the given text. The option
+  // list is virtualized, so type into the popover's filter first to force the row to render.
+  async function setSelect(widgetSel, value) {
+    (await waitFor(widgetSel + ' .select-button')).click();
+    await sleep(300);
+    const filter = document.querySelector(SEL.selectFilter);
+    if (filter) {
+      setNativeValue(filter, value);
+      await sleep(300);
+    }
+    const opt = [...document.querySelectorAll(SEL.selectOption)]
+      .find((o) => o.textContent.trim() === value);
+    if (!opt) throw new Error('option "' + value + '" not found for ' + widgetSel);
+    (opt.closest('a') || opt).click();
+    await sleep(300);
+  }
+
+  // Set the four hour/minute pickers from "HH:MM:SS" strings; null keeps the form defaults.
+  async function setTimes(row) {
+    if (row.startTime) {
+      await setSelect(SEL.startHour, row.startTime.slice(0, 2));
+      await setSelect(SEL.startMinute, row.startTime.slice(3, 5));
+    }
+    if (row.endTime) {
+      await setSelect(SEL.endHour, row.endTime.slice(0, 2));
+      await setSelect(SEL.endMinute, row.endTime.slice(3, 5));
+    }
+  }
+
   // Prefer the task whose name includes 'IMP'; fall back to the first row.
   // Click the cell, not the row wrapper — Appsmith only registers selection on the cell.
+  // Clicking TOGGLES: a click on an already-selected row deselects it, so skip in that case
+  // (happens when the task list has a single, auto-selected row).
   function clickTask() {
     const rows = [...document.querySelectorAll(SEL.taskRow)];
-    const task = rows.find((r) => r.textContent.includes('IMP')) || rows[0];
-    if (task) (task.querySelector('.td') || task).click();
+    const task = rows.find((r) => r.textContent.includes('IMP'))
+      || rows.find((r) => r.textContent.includes('PRESALE'))
+      || rows[0];
+    if (!task) return;
+    if (task.className.includes('selected')) return; // already selected — clicking would disable it
+    (task.querySelector('.td') || task).click();
+  }
+
+  async function setDate(row) {
+    const dateInput = await waitFor(SEL.dateInput);
+    setNativeValue(dateInput, formatDate(row.date));
+    dateInput.dispatchEvent(new Event('blur', { bubbles: true }));
+    await sleep(600);
   }
 
   async function fillOne(row) {
@@ -275,21 +350,19 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
     await sleep(1000); // let the table filter
     (await waitFor(SEL.projectRow)).click();
     await sleep(1000); // task query runs after project selection
-    // Date BEFORE task — changing the date clears the task selection.
-    const dateInput = await waitFor(SEL.dateInput);
-    setNativeValue(dateInput, formatDate(row.date));
-    dateInput.dispatchEvent(new Event('blur', { bubbles: true }));
-    await sleep(600);
+    // Order (observed live): date, then times, then task LAST — earlier steps reset later ones.
+    await setDate(row);
+    await setTimes(row);
+    setNativeValue(await waitFor(SEL.memo), row.description);
+    await sleep(300);
     await waitFor(SEL.taskRow);
     clickTask();
     await sleep(400);
-    setNativeValue(await waitFor(SEL.memo), row.description);
-    await sleep(300);
-    // Create stays disabled if the task click didn't register — re-click the task and retry.
+    // Create stays disabled if the task ended up deselected (toggle) — click it back on.
     let create = null;
     for (let attempt = 0; attempt < 3 && !create; attempt++) {
       create = await waitFor(SEL.createBtn, 5000).catch(() => null);
-      if (!create) { clickTask(); await sleep(600); }
+      if (!create) { clickTask(); await sleep(400); }
     }
     if (!create) throw new Error('Create never enabled — task selection not registering');
     create.click();
@@ -298,6 +371,7 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
 
   function addButton() {
     const btn = document.createElement('button');
+    fillBtn = btn;
     btn.textContent = 'Fill ' + ROWS.length + ' entries';
     Object.assign(btn.style, {
       position: 'fixed', bottom: '20px', left: '20px', zIndex: 999999,
@@ -338,12 +412,52 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
 })();
 "#;
 
-// Open (or reopen) the Appsmith webview with the fill script injected. Rebuilding on every
-// call instead of focusing an existing window keeps ROWS in sync with the current selection.
+// ponytail: URL-hash polling is the IPC-free back-channel from the sandboxed webview.
+// The fill script sets the top frame's hash to #timesh1t_done_<n> where n = rows filled
+// (emitted even on partial failure, so only landed entries get marked done). The AtomicBool
+// keeps re-sends from stacking multiple polls (each would emit its own event).
+static DONE_POLL_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn spawn_done_poll(handle: tauri::AppHandle) {
+    use std::sync::atomic::Ordering;
+    if DONE_POLL_ACTIVE.swap(true, Ordering::SeqCst) {
+        return;
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(1));
+            match handle.get_webview_window("appsmith") {
+                Some(w) => {
+                    let filled = w.url().ok().and_then(|u| {
+                        let s = u.as_str();
+                        let rest = &s[s.find("timesh1t_done_")? + "timesh1t_done_".len()..];
+                        let digits: String =
+                            rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+                        digits.parse::<u32>().ok()
+                    });
+                    if let Some(n) = filled {
+                        let _ = handle.emit("appsmith-filled", n);
+                        break;
+                    }
+                }
+                None => break, // window closed without finishing
+            }
+        }
+        DONE_POLL_ACTIVE.store(false, Ordering::SeqCst);
+    });
+}
+
+// Open the Appsmith webview with the fill script injected. If the window is already open,
+// reuse it — recreating forces the whole Azure+Duo SSO login again — and hand the fresh
+// rows to the fill script via the __timesh1tSendRows relay instead.
 #[tauri::command]
 async fn open_appsmith_filler(app: tauri::AppHandle, url: String, rows_json: String) -> Result<(), String> {
     if let Some(w) = app.get_webview_window("appsmith") {
-        w.destroy().map_err(|e| e.to_string())?;
+        w.eval(&format!("window.__timesh1tSendRows && window.__timesh1tSendRows({rows_json})"))
+            .map_err(|e| e.to_string())?;
+        let _ = w.set_focus();
+        spawn_done_poll(app.clone());
+        return Ok(());
     }
     let script = APPSMITH_FILL_SCRIPT.replace("__ROWS__", &rows_json);
     tauri::WebviewWindowBuilder::new(
@@ -356,29 +470,7 @@ async fn open_appsmith_filler(app: tauri::AppHandle, url: String, rows_json: Str
     .initialization_script_for_all_frames(&script)
     .build()
     .map_err(|e| e.to_string())?;
-
-    // ponytail: URL-hash polling is the IPC-free back-channel from the sandboxed webview.
-    // The fill script sets the top frame's hash to #timesh1t_done_<n> where n = rows filled
-    // (emitted even on partial failure, so only landed entries get marked done).
-    let handle = app.clone();
-    tauri::async_runtime::spawn_blocking(move || loop {
-        std::thread::sleep(std::time::Duration::from_secs(1));
-        match handle.get_webview_window("appsmith") {
-            Some(w) => {
-                let filled = w.url().ok().and_then(|u| {
-                    let s = u.as_str();
-                    let rest = &s[s.find("timesh1t_done_")? + "timesh1t_done_".len()..];
-                    let digits: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
-                    digits.parse::<u32>().ok()
-                });
-                if let Some(n) = filled {
-                    let _ = handle.emit("appsmith-filled", n);
-                    break;
-                }
-            }
-            None => break, // window closed without finishing
-        }
-    });
+    spawn_done_poll(app.clone());
     Ok(())
 }
 

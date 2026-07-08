@@ -197,6 +197,9 @@ export function Home() {
       date: t.date_memo, // raw ISO — the fill script formats it for the date picker
       projectNo: t.projects?.project_no ?? '',
       description: t.description,
+      // "HH:MM:SS" or null (pre-v4.1.0 rows) — null leaves Msync's 09:00/18:00 defaults.
+      startTime: t.start_time,
+      endTime: t.end_time,
     }))
     setActionMessage(null)
     try {
@@ -220,7 +223,7 @@ export function Home() {
         localStorage.setItem('appsmith_fill_log', JSON.stringify(log))
         setFillLog(log)
         if (done.length === 0) {
-          setError('Appsmith fill failed — no entries were created.')
+          setError('Msync fill failed — no entries were created.')
           return
         }
         const { error } = await updateTimesheets(done.map((t) => t.id), { is_complete: true })

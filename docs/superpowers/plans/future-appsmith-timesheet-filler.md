@@ -115,7 +115,7 @@ check (matches project convention: no Rust tests exist today).
 - Release ritual (version bump + CHANGELOG) — do after the feature works, per the existing
   v3.x release pattern, if the user wants to ship it.
 
-## Next phase: send actual per-row times (user-confirmed 2026-07-07, not yet started)
+## Next phase: send actual per-row times (done in v4.2.0, 2026-07-08)
 
 Since v4.1.0, timesheets carry validated `start_time`/`end_time` (time columns; app-enforced:
 09:00–18:00 window, no same-day overlap, ≤8 worked hours/day with 12:00–13:00 lunch excluded —

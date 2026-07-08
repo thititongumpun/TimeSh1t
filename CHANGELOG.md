@@ -3,6 +3,13 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.2.0] - 2026-07-08
+
+- Send to Msync now fills each entry's **actual start/end times** into the hour/minute pickers (the v4.1.0 columns). Entries without stored times keep the form's 09:00–18:00 defaults. The dropdowns are virtualized, so values are picked via the popover's filter box.
+- **No more re-login on every send:** the Msync window is reused when still open — fresh rows are handed to the running fill script instead of rebuilding the window (which forced the Azure+Duo SSO flow each time). Tip: answer "Yes" to Microsoft's "Stay signed in?" and check Duo's remember-me to also skip login after closing the window.
+- Fill order tuned to the form's reset chain (project → date → times → memo → task last), and the task click is toggle-aware: a single auto-selected task no longer gets deselected; if Create stays disabled the task is re-clicked automatically.
+- Task preference is now "IMP", then "PRESALE", then the first task.
+
 ## [4.1.0] - 2026-07-07
 
 - New: **working hours on timesheets** — entries have start/end times (defaults 09:00–18:00). Validated on save: times must stay within 09:00–18:00, entries on the same day cannot overlap, and a day is capped at 8 worked hours (12:00–13:00 lunch excluded). The table shows the time range under the date and orders same-day entries by start time. Requires the `supabase/migrations/20260707_timeslot_columns.sql` migration.
