@@ -3,6 +3,11 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.3.1] - 2026-07-09
+
+- Jira setup now uses Atlassian's streamable-HTTP MCP endpoint (`/v1/mcp/authv2`); the SSE endpoint is deprecated (EOL 30 Jun 2026).
+- Add `start_time`/`end_time` to `archived_timesheets` so working hours survive archiving (migration `20260709_archived_timeslot_columns.sql`).
+
 ## [4.3.0] - 2026-07-09
 
 - Holiday dates now load from a public `holidays.json` on Cloudflare R2 (edit + re-upload, no rebuild) — replaces the Supabase Storage PDF.
