@@ -71,8 +71,9 @@ the Atlassian MCP. Each user sets this up once:
 # 1. Install Claude Code (https://claude.com/claude-code), then log in:
 claude
 # 2. Add the official Atlassian MCP at USER scope (global — the app spawns claude from its
-#    own directory, so a default local-scoped server would be invisible to it):
-claude mcp add --scope user --transport sse atlassian https://mcp.atlassian.com/v1/sse
+#    own directory, so a default local-scoped server would be invisible to it).
+#    The SSE endpoint is deprecated; use the streamable-HTTP endpoint:
+claude mcp add --scope user --transport http atlassian https://mcp.atlassian.com/v1/mcp/authv2
 # 3. Authenticate (headless runs can't log in interactively): run `claude`, type `/mcp`,
 #    pick atlassian → Authenticate, finish the browser login. Confirm with:
 claude mcp list   # atlassian should show "Connected"
