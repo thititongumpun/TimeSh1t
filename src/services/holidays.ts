@@ -1,9 +1,9 @@
 import type { Holiday } from '../types'
 
-// ponytail: hardcoded gist raw URL; move to VITE_HOLIDAYS_URL only if it must differ per env.
-// Update holidays = edit the gist's holidays.json (array of { date, name }). No rebuild.
+// ponytail: hardcoded R2 URL; move to VITE_HOLIDAYS_URL only if it must differ per env.
+// Update holidays = re-upload holidays.json (array of { date, name }) to the R2 bucket. No rebuild.
 const HOLIDAYS_URL =
-  'https://gist.githubusercontent.com/thititongumpun/261e2fa32ac09d59d2e8bab2b54b5b3f/raw/holidays.json'
+  'https://pub-5c0c8cf0929a4656bf8c7b2ac4279feb.r2.dev/holidays.json'
 
 export async function fetchHolidays(): Promise<{ data: Holiday[] | null; error: Error | null }> {
   try {

@@ -3,6 +3,11 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.3.0] - 2026-07-09
+
+- Holiday dates now load from a public `holidays.json` on Cloudflare R2 (edit + re-upload, no rebuild) — replaces the Supabase Storage PDF.
+- Holiday page: click a table row to jump the calendar to that holiday's month and select the date.
+
 ## [4.2.1] - 2026-07-08
 
 - Msync's Memo field now gets the **AI summary** of the entry (falls back to the raw description when no summary exists yet). The fill log records whichever text was pasted.

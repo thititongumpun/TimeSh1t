@@ -6,27 +6,38 @@ import type { Holiday as HolidayType } from '../types'
 
 export function Holiday() {
   const ref = useRef<HTMLDivElement>(null)
+  const calRef = useRef<Calendar | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [holidays, setHolidays] = useState<HolidayType[]>([])
 
+  // click a table date → jump the calendar to that month (date is "YYYY-MM-DD")
+  const jumpTo = (date: string) => {
+    const [year, month] = date.split('-').map(Number)
+    calRef.current?.set({
+      selectedYear: year,
+      selectedMonth: (month - 1) as never,
+      selectedDates: [date],
+    })
+  }
+
   useEffect(() => {
-    let cal: Calendar | null = null
     fetchHolidays().then(({ data, error }) => {
       setLoading(false)
       if (error) return setError(error.message)
       const list = data ?? []
       setHolidays(list)
       if (!ref.current) return
-      cal = new Calendar(ref.current, {
+      const cal = new Calendar(ref.current, {
         // highlight every gist date (adds data-vc-date-holiday → styled by the lib)
         selectedHolidays: list.map((h) => h.date),
         // click/hover a highlighted date → show its holiday name
         popups: Object.fromEntries(list.map((h) => [h.date, { html: h.name }])),
       })
       cal.init()
+      calRef.current = cal
     })
-    return () => cal?.destroy()
+    return () => calRef.current?.destroy()
   }, [])
 
   return (
@@ -56,7 +67,7 @@ export function Holiday() {
             </thead>
             <tbody>
               {holidays.map((h) => (
-                <tr key={h.date}>
+                <tr key={h.date} class="cursor-pointer hover" onClick={() => jumpTo(h.date)}>
                   <td class="font-mono text-sm opacity-70 whitespace-nowrap">{h.date}</td>
                   <td>{h.name}</td>
                 </tr>

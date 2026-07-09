@@ -6,16 +6,16 @@ A desktop timesheet tracker built with Tauri 2.0, Preact, and Supabase. Log work
 
 - **Shell:** Tauri 2.0 (Rust hosts the window; all logic is TypeScript)
 - **UI:** Preact + `preact-iso` routing, Preact Signals for auth state
-- **Styling:** Tailwind CSS v3 + DaisyUI v4
+- **Styling:** Tailwind CSS v4 + DaisyUI v5
 - **Backend:** Supabase (Postgres + Auth, RLS scoped to `auth.uid()`)
 - **AI:** Cloudflare Worker (`AI` binding) cleans up timesheet descriptions
 
 ## Features
 
-- Timesheet entry with project assignment and complete/incomplete status
+- Timesheet entry with project assignment, per-entry working hours (start/end times, validated 09:00–18:00 / max 8h/day), and complete/incomplete status
 - Project management
 - Archived timesheets view with pagination
-- Holiday calendar — renders the newest PDF from a public Supabase Storage `holidays` bucket (swap it from the dashboard, no rebuild)
+- Holiday calendar — interactive `vanilla-calendar-pro` view plus a table; click a table row to jump the calendar to that holiday. Dates load from a public `holidays.json` on Cloudflare R2 (edit the file and re-upload, no rebuild)
 - Auto-update via Tauri updater; light/dark theme
 
 ## Setup
@@ -46,9 +46,9 @@ npm run test:run     # Vitest (single run, CI)
 Two tables, both with RLS (`auth.uid() = user_id`):
 
 - **`projects`** — `id`, `user_id`, `project_no`, `project_name`, `is_active`, `inserted_at`
-- **`timesheets`** — `id`, `user_id`, `date_memo`, `description`, `project_id` (FK → projects), `is_complete`, `inserted_at`, `ai_summary` (populated externally by the Worker, never written by the app)
+- **`timesheets`** — `id`, `user_id`, `date_memo`, `description`, `project_id` (FK → projects), `is_complete`, `inserted_at`, `start_time`/`end_time` (nullable — null on pre-v4.1.0 rows), `ai_summary` (populated externally by the Worker, never written by the app)
 
-Plus a public Storage bucket `holidays` for the holiday calendar PDF.
+Holiday dates are served as `holidays.json` from a public Cloudflare R2 bucket (not the database).
 
 ## Cloudflare AI
 
