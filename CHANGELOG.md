@@ -3,6 +3,14 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.4.0] - 2026-07-13
+
+- Collapsible sidebar: toggle it down to an icon-only rail (DaisyUI drawer with `is-drawer-close` variants), with hover tooltips on nav icons and a smooth width animation. On narrow windows it becomes an overlay drawer with a hamburger button.
+- Theme picker: nine DaisyUI themes (light, dark, retro, nord, abyss, aqua, lofi, acid, dracula) selectable from a sidebar dropdown or the Settings modal.
+- Page footer with copyright and the running app version.
+- Fixed the sidebar date wrapping under the clock.
+- Fixed the Settings modal rendering trapped inside the sidebar rail (drawer transform made it the containing block for `position: fixed`).
+
 ## [4.3.2] - 2026-07-09
 
 - Redesigned sidebar: live clock, icon navigation with an active-route accent, and a one-click light/dark toggle in the footer.

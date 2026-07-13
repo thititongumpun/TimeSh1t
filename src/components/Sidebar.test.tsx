@@ -50,11 +50,11 @@ describe('Sidebar', () => {
     renderSidebar()
     fireEvent.click(screen.getByRole('button', { name: /open user settings/i }))
 
-    const themeToggle = screen.getByRole('checkbox', { name: /use dark mode/i })
-    expect(themeToggle).toBeChecked()
-    fireEvent.click(themeToggle)
+    const themeSelect = screen.getByRole('combobox', { name: /theme/i })
+    expect(themeSelect).toHaveValue('dark')
+    fireEvent.change(themeSelect, { target: { value: 'retro' } })
 
-    expect(document.documentElement.dataset.theme).toBe('light')
-    expect(localStorage.getItem('timesh1t-theme')).toBe('light')
+    expect(document.documentElement.dataset.theme).toBe('retro')
+    expect(localStorage.getItem('timesh1t-theme')).toBe('retro')
   })
 })

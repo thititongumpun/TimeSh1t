@@ -7,7 +7,7 @@ import packageJson from '../../package.json'
 import { changePassword, signOut, updateProfile } from '../services/auth'
 import { currentUser } from '../store/auth'
 import { onlineUsers, updatePresence } from '../store/presence'
-import { applyTheme, getStoredTheme, type ThemeMode } from '../lib/theme'
+import { applyTheme, getStoredTheme, THEMES, type ThemeMode } from '../lib/theme'
 
 // Lucide-style stroke icons, drawn with currentColor so they inherit the link's theme color.
 const ICONS: Record<string, string[]> = {
@@ -22,6 +22,7 @@ const ICONS: Record<string, string[]> = {
   ask: ['M4 5h16v11H9l-4 4V5z', 'M12 8.5a1.6 1.6 0 0 1 1.6 1.6c0 1.2-1.6 1.2-1.6 2.4', 'M12 14.5h.01'],
   jira: ['M12 2 20 12l-8 10L4 12z', 'M12 8l4 4-4 4-4-4z'],
   timeline: ['M3 12h4l2.5-7 4 14 2.5-7H21'],
+  sidebar: ['M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z', 'M9 4v16', 'M14 10l2 2l-2 2'],
 }
 
 function Icon({ paths, class: cls = 'h-[18px] w-[18px]' }: { paths: string[]; class?: string }) {
@@ -180,22 +181,33 @@ export function Sidebar() {
   }
 
   return (
-    <aside class="flex h-screen w-52 flex-col border-r border-base-300 bg-base-200">
+    // translate-none + will-change-auto undo daisyUI's drawer slide transform: with a
+    // transform the aside becomes the containing block for position:fixed, trapping the
+    // modals inside the rail. Mobile open/close falls back to the drawer's opacity fade.
+    <aside class="flex h-screen w-52 translate-none will-change-auto flex-col border-r border-base-300 bg-base-200 transition-[width] duration-300 ease-in-out is-drawer-close:w-14">
       {/* Brand + live clock (signature) */}
-      <div class="px-4 pt-4 pb-3">
+      <div class="px-4 pt-4 pb-3 is-drawer-close:px-2">
         <div class="flex items-center gap-2">
-          <span class="grid h-8 w-8 place-items-center rounded-lg bg-primary/15 text-primary">
+          <span class="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-primary/15 text-primary transition-all duration-300 is-drawer-close:w-0 is-drawer-close:opacity-0">
             <Icon paths={ICONS.clock} />
           </span>
-          <span class="text-lg font-bold tracking-tight">T1meSh1t</span>
+          <span class="max-w-32 overflow-hidden whitespace-nowrap text-lg font-bold tracking-tight transition-all duration-300 is-drawer-close:max-w-0 is-drawer-close:opacity-0">T1meSh1t</span>
+          <label
+            for="app-drawer"
+            aria-label="Toggle sidebar"
+            data-tip="Expand sidebar"
+            class="btn btn-square btn-ghost btn-xs ml-auto is-drawer-close:mr-auto is-drawer-close:tooltip is-drawer-close:tooltip-right"
+          >
+            <Icon paths={ICONS.sidebar} class="h-4 w-4" />
+          </label>
         </div>
-        <div class="mt-2 flex items-baseline gap-2 font-mono tabular-nums">
-          <span class="text-2xl font-semibold leading-none">{clock}</span>
-          <span class="text-[0.65rem] uppercase tracking-widest opacity-50">{today}</span>
+        <div class="mt-2 flex max-h-8 items-baseline gap-2 overflow-hidden font-mono tabular-nums transition-all duration-300 is-drawer-close:mt-0 is-drawer-close:max-h-0 is-drawer-close:opacity-0">
+          <span class="text-xl font-semibold leading-none">{clock}</span>
+          <span class="whitespace-nowrap text-[0.65rem] uppercase tracking-wide opacity-50">{today}</span>
         </div>
       </div>
 
-      <nav class="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
+      <nav class="flex-1 space-y-0.5 overflow-y-auto px-2 py-2 is-drawer-close:overflow-visible">
         {NAV.map((item) => {
           const active = item.exact ? url === item.href : url.startsWith(item.href)
           return (
@@ -203,7 +215,8 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               aria-current={active ? 'page' : undefined}
-              class={`flex items-center gap-3 rounded-lg py-2 pr-3 text-sm transition-colors ${
+              data-tip={item.label}
+              class={`flex items-center gap-3 rounded-lg py-2 pr-3 text-sm transition-colors is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:gap-2 is-drawer-close:pr-1.5 ${
                 active
                   ? 'bg-primary/10 font-medium text-primary'
                   : 'text-base-content/70 hover:bg-base-300/60 hover:text-base-content'
@@ -211,24 +224,24 @@ export function Sidebar() {
             >
               <span class={`h-5 w-0.5 rounded-full ${active ? 'bg-primary' : 'bg-transparent'}`} />
               <Icon paths={ICONS[item.icon]} />
-              <span>{item.label}</span>
+              <span class="max-w-28 overflow-hidden whitespace-nowrap transition-all duration-300 is-drawer-close:max-w-0 is-drawer-close:opacity-0">{item.label}</span>
             </a>
           )
         })}
       </nav>
       {new Date().getDate() === 25 && (
-        <div class="px-3 pb-2">
+        <div class="px-3 pb-2 is-drawer-close:hidden">
           <div class="alert alert-warning px-3 py-2 text-xs" role="alert">
             <span>Timesheet cutoff is today — submit yours before end of day.</span>
           </div>
         </div>
       )}
       <div class="px-3 pb-1">
-        <div class="flex items-center gap-2 px-2 py-1 text-sm opacity-80">
+        <div class="flex items-center gap-2 px-2 py-1 text-sm opacity-80 is-drawer-close:hidden">
           <span class="inline-block h-2 w-2 rounded-full bg-success" />
           {online.length} online
         </div>
-        <div class="mt-1 flex flex-wrap gap-1 px-2">
+        <div class="mt-1 flex flex-wrap gap-1 px-2 is-drawer-close:justify-center is-drawer-close:px-0">
           {online.map((u) => (
             <div key={u.email} class="tooltip tooltip-right" data-tip={u.name}>
               <div class="avatar placeholder">
@@ -243,23 +256,39 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Quick light/dark switch — the full theme row still lives in Settings */}
+      {/* Quick theme switch — the full theme row still lives in Settings */}
       <div class="px-3 pb-2">
-        <div class="join w-full">
-          <button
-            class={`btn join-item btn-xs flex-1 gap-1 ${theme === 'light' ? 'btn-primary' : 'btn-ghost'}`}
-            aria-pressed={theme === 'light'}
-            onClick={() => changeTheme('light')}
-          >
-            <Icon paths={ICONS.sun} class="h-3.5 w-3.5" /> Light
-          </button>
-          <button
-            class={`btn join-item btn-xs flex-1 gap-1 ${theme === 'dark' ? 'btn-primary' : 'btn-ghost'}`}
-            aria-pressed={theme === 'dark'}
-            onClick={() => changeTheme('dark')}
-          >
-            <Icon paths={ICONS.moon} class="h-3.5 w-3.5" /> Dark
-          </button>
+        <div class="dropdown dropdown-top w-full">
+          <div tabindex={0} role="button" class="btn btn-ghost btn-xs w-full justify-between gap-1 is-drawer-close:justify-center">
+            <span class="flex items-center gap-1.5">
+              <Icon paths={theme === 'dark' ? ICONS.moon : ICONS.sun} class="h-3.5 w-3.5" />
+              <span class="max-w-16 overflow-hidden whitespace-nowrap transition-all duration-300 is-drawer-close:max-w-0 is-drawer-close:opacity-0">Theme</span>
+            </span>
+            <svg
+              width="12px"
+              height="12px"
+              class="inline-block h-2 w-2 fill-current opacity-60 is-drawer-close:hidden"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 2048 2048"
+            >
+              <path d="M1799 349l242 241-1017 1017L7 590l242-241 775 775 775-775z" />
+            </svg>
+          </div>
+          <ul tabindex={0} class="dropdown-content z-30 w-44 rounded-box bg-base-300 p-2 shadow-2xl">
+            {THEMES.map((t) => (
+              <li key={t}>
+                <input
+                  type="radio"
+                  name="theme-dropdown"
+                  class="theme-controller btn btn-ghost btn-xs btn-block justify-start capitalize"
+                  aria-label={t}
+                  value={t}
+                  checked={theme === t}
+                  onChange={() => changeTheme(t)}
+                />
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
@@ -270,13 +299,13 @@ export function Sidebar() {
             onClick={() => setUpdateModalOpen(true)}
           >
             <span class="inline-block h-2 w-2 shrink-0 rounded-full bg-primary-content" />
-            <span class="min-w-0 truncate">Update v{update.version}</span>
+            <span class="min-w-0 truncate is-drawer-close:hidden">Update v{update.version}</span>
           </button>
         </div>
       )}
       <div class="p-3">
         <button
-          class="btn btn-ghost h-auto min-h-0 w-full justify-start gap-3 px-2 py-2"
+          class="btn btn-ghost h-auto min-h-0 w-full justify-start gap-3 px-2 py-2 is-drawer-close:justify-center is-drawer-close:px-0"
           aria-label="Open user settings"
           onClick={() => setSettingsOpen(true)}
         >
@@ -287,7 +316,7 @@ export function Sidebar() {
                 : <span class="text-xs font-semibold">{initials}</span>}
             </div>
           </div>
-          <div class="min-w-0 text-left">
+          <div class="min-w-0 max-w-32 overflow-hidden text-left transition-all duration-300 is-drawer-close:max-w-0 is-drawer-close:opacity-0">
             <div class="truncate text-sm font-medium">{displayName}</div>
             <div class="truncate text-xs opacity-60">Settings</div>
           </div>
@@ -383,21 +412,18 @@ export function Sidebar() {
             <div class="flex items-center justify-between">
               <div>
                 <div class="font-medium">Theme</div>
-                <div class="text-sm opacity-60">{theme === 'dark' ? 'Dark mode' : 'Light mode'}</div>
+                <div class="text-sm capitalize opacity-60">{theme}</div>
               </div>
-              <label class="flex cursor-pointer items-center gap-2">
-                <span class="text-sm">Light</span>
-                <input
-                  type="checkbox"
-                  class="toggle toggle-primary"
-                  aria-label="Use dark mode"
-                  checked={theme === 'dark'}
-                  onChange={(event) => {
-                    changeTheme(event.currentTarget.checked ? 'dark' : 'light')
-                  }}
-                />
-                <span class="text-sm">Dark</span>
-              </label>
+              <select
+                class="select select-sm w-36 capitalize"
+                aria-label="Theme"
+                value={theme}
+                onChange={(event) => changeTheme(event.currentTarget.value as ThemeMode)}
+              >
+                {THEMES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
 
             <div class="divider" />

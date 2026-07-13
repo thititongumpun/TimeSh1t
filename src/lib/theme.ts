@@ -1,10 +1,11 @@
-export type ThemeMode = 'light' | 'dark'
+export const THEMES = ['light', 'dark', 'retro', 'nord', 'abyss', 'aqua', 'lofi', 'acid', 'dracula'] as const
+export type ThemeMode = (typeof THEMES)[number]
 
 const THEME_STORAGE_KEY = 'timesh1t-theme'
 
 export function getStoredTheme(): ThemeMode {
   const storedTheme = localStorage.getItem(THEME_STORAGE_KEY)
-  if (storedTheme === 'light' || storedTheme === 'dark') return storedTheme
+  if (THEMES.includes(storedTheme as ThemeMode)) return storedTheme as ThemeMode
   return 'dark'
 }
 
