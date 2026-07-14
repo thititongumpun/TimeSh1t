@@ -290,16 +290,20 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
 
   // Open an Appsmith select widget and click the option with the given text. The option
   // list is virtualized, so type into the popover's filter first to force the row to render.
+  // Options are query-backed and slow on a loaded msync — poll instead of one-shot waits.
   async function setSelect(widgetSel, value) {
     (await waitFor(widgetSel + ' .select-button')).click();
-    await sleep(300);
+    await waitFor(SEL.selectOption, 15000); // real options, not just the popover shell
     const filter = document.querySelector(SEL.selectFilter);
     if (filter) {
       setNativeValue(filter, value);
-      await sleep(300);
     }
-    const opt = [...document.querySelectorAll(SEL.selectOption)]
-      .find((o) => o.textContent.trim() === value);
+    let opt = null;
+    for (let i = 0; i < 20 && !opt; i++) {
+      opt = [...document.querySelectorAll(SEL.selectOption)]
+        .find((o) => o.textContent.trim() === value) || null;
+      if (!opt) await sleep(300);
+    }
     if (!opt) throw new Error('option "' + value + '" not found for ' + widgetSel);
     (opt.closest('a') || opt).click();
     await sleep(300);
@@ -338,24 +342,27 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
     await sleep(600);
   }
 
+  // msync loads slowly — settle time after steps that trigger backend queries.
+  const STEP_WAIT = 4000;
+
   async function fillOne(row) {
     // After a Create the app may land back on the list page — reopen the form if so.
     if (!document.querySelector(SEL.projectTable)) {
-      (await waitFor(SEL.createTimesheetBtn)).click();
-      await waitFor(SEL.projectTable);
-      await sleep(800);
+      (await waitFor(SEL.createTimesheetBtn, 20000)).click();
+      await waitFor(SEL.projectTable, 20000);
+      await sleep(STEP_WAIT);
     }
     const search = await waitFor(SEL.projectSearch);
     setNativeValue(search, row.projectNo);
     await sleep(1000); // let the table filter
-    (await waitFor(SEL.projectRow)).click();
-    await sleep(1000); // task query runs after project selection
+    (await waitFor(SEL.projectRow, 15000)).click();
+    await sleep(STEP_WAIT); // task query runs after project selection
     // Order (observed live): date, then times, then task LAST — earlier steps reset later ones.
     await setDate(row);
     await setTimes(row);
     setNativeValue(await waitFor(SEL.memo), row.description);
     await sleep(300);
-    await waitFor(SEL.taskRow);
+    await waitFor(SEL.taskRow, 20000);
     clickTask();
     await sleep(400);
     // Create stays disabled if the task ended up deselected (toggle) — click it back on.
@@ -366,7 +373,7 @@ const APPSMITH_FILL_SCRIPT: &str = r#"
     }
     if (!create) throw new Error('Create never enabled — task selection not registering');
     create.click();
-    await sleep(1500); // submit + page settle
+    await sleep(STEP_WAIT); // submit + page settle before the next row starts
   }
 
   function addButton() {
@@ -527,6 +534,7 @@ const PARK_FILL_SCRIPT: &str = r#"
   let CARD = __CARD__;
   let CAR_TYPE = __CAR_TYPE__; // Msync dropdown text, e.g. "รถยนต์" / "มอเตอร์ไซต์"
   let PLATE = __PLATE__;       // the user's vehicle from the app's Supabase table
+  const STEP_WAIT = 4000;      // msync loads slowly — settle time after each page transition
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -557,12 +565,14 @@ const PARK_FILL_SCRIPT: &str = r#"
   // → Submit. Car type + plate come from the vehicle picked on the Park page. =====
 
   // Appsmith select: open, type into the popover filter (options are virtualized),
-  // click the match. Fuzzy fallback, then first option (plate list is just the user's cars).
+  // click the match. Options are query-backed and can take seconds to render on a slow
+  // msync — poll for them instead of a one-shot wait. Fuzzy fallback, then first option.
   async function setSelect(idx, value) {
     const btn = [...document.querySelectorAll('button.select-button')][idx];
     if (!btn) throw new Error('select #' + idx + ' not found');
     btn.click();
-    await sleep(400);
+    // Wait until the popover has real options, not just until it exists.
+    await waitFor('.select-popover-wrapper .menu-item-text', 15000);
     const pick = () => {
       const opts = [...document.querySelectorAll('.select-popover-wrapper .menu-item-text')];
       return opts.find((o) => o.textContent.trim() === value)
@@ -570,9 +580,11 @@ const PARK_FILL_SCRIPT: &str = r#"
         || null;
     };
     const filter = document.querySelector('.select-popover-wrapper input.bp3-input');
-    if (filter) { setNativeValue(filter, value); await sleep(400); }
-    let opt = pick();
-    if (!opt && filter) { setNativeValue(filter, ''); await sleep(400); opt = pick(); }
+    if (filter) { setNativeValue(filter, value); }
+    // Poll up to ~6s for the match to render (filter re-queries on a slow backend).
+    let opt = null;
+    for (let i = 0; i < 20 && !opt; i++) { opt = pick(); if (!opt) await sleep(300); }
+    if (!opt && filter) { setNativeValue(filter, ''); await sleep(800); opt = pick(); }
     if (!opt) opt = document.querySelector('.select-popover-wrapper .menu-item-text');
     if (!opt) throw new Error('no option matching "' + value + '" in select #' + idx);
     (opt.closest('a') || opt).click();
@@ -618,10 +630,10 @@ const PARK_FILL_SCRIPT: &str = r#"
       if (!document.querySelector('button.select-button')) {
         // 1. "สำหรับพนักงาน (1ชั่วโมง)" — long wait: app boot + auto refresh-login run first.
         (await waitFor('.t--widget-sjinfinite button', 60000)).click();
-        await sleep(800);
+        await sleep(STEP_WAIT);
         // 2. "Registered Vehicle" tab (skip when already selected)
         const tab = await (async () => {
-          for (let i = 0; i < 75; i++) {
+          for (let i = 0; i < 150; i++) {
             const s = [...document.querySelectorAll('span')]
               .find((n) => n.textContent.trim() === 'Registered Vehicle');
             if (s) return s;
@@ -629,9 +641,9 @@ const PARK_FILL_SCRIPT: &str = r#"
           }
           throw new Error('timeout waiting for Registered Vehicle tab');
         })();
-        if (!tab.className.includes('is-selected')) { tab.click(); await sleep(800); }
-        await waitFor('button.select-button');
-        await sleep(500);
+        if (!tab.className.includes('is-selected')) { tab.click(); await sleep(STEP_WAIT); }
+        await waitFor('button.select-button', 20000);
+        await sleep(STEP_WAIT);
       }
       // 3. car type
       await setSelect(0, CAR_TYPE);
@@ -643,9 +655,13 @@ const PARK_FILL_SCRIPT: &str = r#"
       // 5. license plate
       await setSelect(1, PLATE);
       await sleep(400);
-      // 6. Submit (text-matched; the select buttons also say nothing like "Submit")
-      const submit = [...document.querySelectorAll('button')]
-        .find((b) => !b.className.includes('select-button') && b.textContent.trim() === 'Submit');
+      // 6. Submit (text-matched; polled — the button can render late on slow loads)
+      let submit = null;
+      for (let i = 0; i < 25 && !submit; i++) {
+        submit = [...document.querySelectorAll('button')]
+          .find((b) => !b.className.includes('select-button') && b.textContent.trim() === 'Submit') || null;
+        if (!submit) await sleep(400);
+      }
       if (!submit) throw new Error('Submit button not found');
       submit.click();
       await sleep(1200);
