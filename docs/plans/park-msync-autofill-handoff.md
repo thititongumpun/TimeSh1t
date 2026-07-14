@@ -2,6 +2,8 @@
 
 **Date:** 2026-07-13 · **App version at handoff:** 4.4.0 (unreleased Park changes in working tree)
 
+> **Update 2026-07-14:** camera/OCR removed entirely — tesseract couldn't read handwritten marker digits on the worn cards (verified against a real card photo). Park is now a manual digits-only input + "Send to Msync". `tesseract.js`, `cardno.ts`, and `src-tauri/Info.plist` are gone. The remaining work below (real URL + autofill injection) still applies.
+
 ## What shipped this session (done, verified)
 
 New **Park** sidebar page: webcam capture → tesseract.js OCR (digits-only) → editable numeric-only input → "Send to Msync" copies the card no. to clipboard and opens Msync in an in-app Tauri webview (SSO-preserving, open-or-focus).

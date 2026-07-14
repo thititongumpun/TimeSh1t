@@ -49,3 +49,18 @@ export type TimesheetInput = {
   start_time: string | null
   end_time: string | null
 }
+
+export type Vehicle = {
+  id: string
+  user_id: string
+  vehicle_type: 'car' | 'motorcycle'
+  license_plate: string
+  is_default: boolean
+  inserted_at: string
+}
+
+export type VehicleInput = {
+  vehicle_type: 'car' | 'motorcycle'
+  license_plate: string
+  is_default: boolean
+}

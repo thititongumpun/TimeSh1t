@@ -3,6 +3,13 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.5.0] - 2026-07-14
+
+- Park: full Msync carpark autofill — opens the parking app in an SSO-preserving webview, auto-clicks "Refresh Login", picks the vehicle type, fills the card no., selects the license plate, and submits. Submission is confirmed back to the app via the URL-hash back-channel and recorded in a "Park fill log" (with Clear).
+- Park: vehicle management — add/remove cars and motorcycles with license plates, one default vehicle (radio-selected) used for the send. Stored in a new Supabase `vehicles` table with owner-only RLS (`supabase/migrations/20260714_vehicles.sql` — run it before upgrading).
+- Park: redesigned page — card-based layout (carpark card, vehicles, fill log) consistent with the rest of the app.
+- Park: removed the camera/OCR scan (tesseract.js) — it could not read handwritten card numbers reliably; the card no. is typed instead.
+
 ## [4.4.0] - 2026-07-13
 
 - Collapsible sidebar: toggle it down to an icon-only rail (DaisyUI drawer with `is-drawer-close` variants), with hover tooltips on nav icons and a smooth width animation. On narrow windows it becomes an overlay drawer with a hamburger button.

@@ -474,13 +474,269 @@ async fn open_appsmith_filler(app: tauri::AppHandle, url: String, rows_json: Str
     Ok(())
 }
 
-// Open-or-focus the Msync park window. Reuse keeps the SSO session alive.
+// Park autofill. The msync /parking page embeds the Appsmith "parking-master" app in a
+// cross-origin iframe (same wrapper pattern as the timesheet filler). Selectors below are
+// best-effort until confirmed live — the floating panel lists the page's real t--widget-*
+// names so they can be pinned; see docs/plans/park-msync-autofill-handoff.md.
+const PARK_FILL_SCRIPT: &str = r#"
+(() => {
+  // Duo SSO "Update macOS" nag — auto-click "Skip for now" (same as timesheet filler).
+  (function autoSkipDuo() {
+    let tries = 60;
+    const t = setInterval(() => {
+      const el = [...document.querySelectorAll('a, button')]
+        .find((n) => n.textContent.trim() === 'Skip for now');
+      if (el) { el.click(); clearInterval(t); }
+      else if (--tries <= 0) clearInterval(t);
+    }, 500);
+  })();
+
+  // The app shows a "Refresh Login" button when its token is stale — click it wherever it
+  // appears (runs in every frame; text match keeps it selector-free).
+  (function autoRefreshLogin() {
+    let tries = 120;
+    const t = setInterval(() => {
+      const el = [...document.querySelectorAll('a, button')]
+        .find((n) => /refresh\s*login/i.test(n.textContent));
+      if (el) { el.click(); clearInterval(t); }
+      else if (--tries <= 0) clearInterval(t);
+    }, 500);
+  })();
+
+  // Reuse path: window already open, Rust evals this in the top frame with fresh values.
+  window.__timesh1tSendCard = (card, carType, plate) => {
+    try { location.hash = ''; } catch (e) {} // clear a stale done-signal from the last run
+    const msg = { type: 'TIMESH1T_CARD', card, carType, plate };
+    window.postMessage(msg, '*');
+    [...document.querySelectorAll('iframe')].forEach((f) => {
+      try { f.contentWindow.postMessage(msg, '*'); } catch (e) {}
+    });
+  };
+
+  // Non-appsmith frames only relay the submit-done signal into the top frame's URL hash,
+  // which Rust polls (the sandboxed webview has no Tauri IPC).
+  if (!location.hostname.includes('appsmith')) {
+    window.addEventListener('message', (e) => {
+      if (typeof e.data === 'string' && e.data.indexOf('TIMESH1T_PARK_DONE:') === 0 && window.top === window) {
+        try { location.hash = 'timesh1t_park_done_' + e.data.split(':')[1]; } catch (err) {}
+      }
+    });
+    return;
+  }
+
+  let CARD = __CARD__;
+  let CAR_TYPE = __CAR_TYPE__; // Msync dropdown text, e.g. "รถยนต์" / "มอเตอร์ไซต์"
+  let PLATE = __PLATE__;       // the user's vehicle from the app's Supabase table
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function waitFor(selector, timeoutMs = 30000) {
+    return new Promise((resolve, reject) => {
+      const t0 = Date.now();
+      const tick = () => {
+        const el = document.querySelector(selector);
+        if (el) return resolve(el);
+        if (Date.now() - t0 > timeoutMs) return reject(new Error('timeout waiting for ' + selector));
+        setTimeout(tick, 200);
+      };
+      tick();
+    });
+  }
+
+  // React-controlled inputs need the native value setter + an 'input' event.
+  function setNativeValue(el, value) {
+    const proto = el instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // ===== Flow (from live HTML, 2026-07-14): "สำหรับพนักงาน (1ชั่วโมง)" button →
+  // "Registered Vehicle" tab → car type select → card no input → license plate select
+  // → Submit. Car type + plate come from the vehicle picked on the Park page. =====
+
+  // Appsmith select: open, type into the popover filter (options are virtualized),
+  // click the match. Fuzzy fallback, then first option (plate list is just the user's cars).
+  async function setSelect(idx, value) {
+    const btn = [...document.querySelectorAll('button.select-button')][idx];
+    if (!btn) throw new Error('select #' + idx + ' not found');
+    btn.click();
+    await sleep(400);
+    const pick = () => {
+      const opts = [...document.querySelectorAll('.select-popover-wrapper .menu-item-text')];
+      return opts.find((o) => o.textContent.trim() === value)
+        || opts.find((o) => o.textContent.replace(/\s/g, '').includes(value.replace(/\s/g, '')))
+        || null;
+    };
+    const filter = document.querySelector('.select-popover-wrapper input.bp3-input');
+    if (filter) { setNativeValue(filter, value); await sleep(400); }
+    let opt = pick();
+    if (!opt && filter) { setNativeValue(filter, ''); await sleep(400); opt = pick(); }
+    if (!opt) opt = document.querySelector('.select-popover-wrapper .menu-item-text');
+    if (!opt) throw new Error('no option matching "' + value + '" in select #' + idx);
+    (opt.closest('a') || opt).click();
+    await sleep(400);
+  }
+
+  // The card no field is a bare .bp3-input — exclude the select popover's filter input.
+  function cardInput() {
+    return [...document.querySelectorAll('input.bp3-input[type="text"], input.bp3-input:not([type])')]
+      .find((i) => !i.closest('.select-popover-wrapper')) || null;
+  }
+
+  let panel = null;
+  function report(msg) {
+    if (!panel) {
+      panel = document.createElement('div');
+      Object.assign(panel.style, {
+        position: 'fixed', bottom: '20px', left: '20px', zIndex: 999999, maxWidth: '420px',
+        maxHeight: '40vh', overflow: 'auto', padding: '10px 14px', background: '#1f2937',
+        color: '#fff', borderRadius: '8px', fontSize: '12px', fontFamily: 'monospace',
+        whiteSpace: 'pre-wrap', boxShadow: '0 2px 8px rgba(0,0,0,.35)',
+      });
+      panel.onclick = () => panel.remove();
+      document.body.appendChild(panel);
+    }
+    panel.textContent += msg + '\n';
+  }
+
+  function listWidgets() {
+    const names = new Set();
+    document.querySelectorAll('[class*="t--widget-"]').forEach((el) => {
+      [...el.classList].forEach((c) => { if (c.startsWith('t--widget-')) names.add(c); });
+    });
+    report('widgets: ' + ([...names].join(', ') || '(none found)'));
+  }
+
+  let running = false;
+  async function fill() {
+    if (!CARD || running) return;
+    running = true;
+    try {
+      // Steps 1-2 only apply on the landing page — a refill in an already-open form skips them.
+      if (!document.querySelector('button.select-button')) {
+        // 1. "สำหรับพนักงาน (1ชั่วโมง)" — long wait: app boot + auto refresh-login run first.
+        (await waitFor('.t--widget-sjinfinite button', 60000)).click();
+        await sleep(800);
+        // 2. "Registered Vehicle" tab (skip when already selected)
+        const tab = await (async () => {
+          for (let i = 0; i < 75; i++) {
+            const s = [...document.querySelectorAll('span')]
+              .find((n) => n.textContent.trim() === 'Registered Vehicle');
+            if (s) return s;
+            await sleep(200);
+          }
+          throw new Error('timeout waiting for Registered Vehicle tab');
+        })();
+        if (!tab.className.includes('is-selected')) { tab.click(); await sleep(800); }
+        await waitFor('button.select-button');
+        await sleep(500);
+      }
+      // 3. car type
+      await setSelect(0, CAR_TYPE);
+      // 4. card no
+      const input = cardInput();
+      if (!input) throw new Error('card no input not found');
+      setNativeValue(input, CARD);
+      await sleep(300);
+      // 5. license plate
+      await setSelect(1, PLATE);
+      await sleep(400);
+      // 6. Submit (text-matched; the select buttons also say nothing like "Submit")
+      const submit = [...document.querySelectorAll('button')]
+        .find((b) => !b.className.includes('select-button') && b.textContent.trim() === 'Submit');
+      if (!submit) throw new Error('Submit button not found');
+      submit.click();
+      await sleep(1200);
+      report('submitted card ' + CARD);
+      // Signal T1meSh1t (URL-hash back-channel, same as the timesheet filler).
+      try { window.top.postMessage('TIMESH1T_PARK_DONE:' + CARD, '*'); } catch (e) {}
+      if (window.top === window) { try { location.hash = 'timesh1t_park_done_' + CARD; } catch (e) {} }
+    } catch (e) {
+      report('fill failed: ' + e.message);
+      listWidgets();
+    }
+    running = false;
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'TIMESH1T_CARD' && typeof e.data.card === 'string') {
+      CARD = e.data.card;
+      if (typeof e.data.carType === 'string') CAR_TYPE = e.data.carType;
+      if (typeof e.data.plate === 'string') PLATE = e.data.plate;
+      fill();
+    }
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fill);
+  } else {
+    fill();
+  }
+})();
+"#;
+
+// Park submit-done poll — same URL-hash back-channel as spawn_done_poll, but for the
+// "park" window; the hash carries the submitted card no., emitted as "park-filled".
+static PARK_POLL_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn spawn_park_done_poll(handle: tauri::AppHandle) {
+    use std::sync::atomic::Ordering;
+    if PARK_POLL_ACTIVE.swap(true, Ordering::SeqCst) {
+        return;
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(1));
+            match handle.get_webview_window("park") {
+                Some(w) => {
+                    let card = w.url().ok().and_then(|u| {
+                        let s = u.as_str();
+                        let rest = &s[s.find("timesh1t_park_done_")? + "timesh1t_park_done_".len()..];
+                        let digits: String =
+                            rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+                        (!digits.is_empty()).then_some(digits)
+                    });
+                    if let Some(card) = card {
+                        let _ = handle.emit("park-filled", card);
+                        break;
+                    }
+                }
+                None => break, // window closed without finishing
+            }
+        }
+        PARK_POLL_ACTIVE.store(false, Ordering::SeqCst);
+    });
+}
+
+// Open-or-focus the Msync park window with the card no. injected. Reuse keeps the SSO
+// session alive; the reuse branch relays the fresh card via __timesh1tSendCard.
 #[tauri::command]
-async fn open_park_window(app: tauri::AppHandle, url: String) -> Result<(), String> {
+async fn open_park_window(
+    app: tauri::AppHandle,
+    url: String,
+    card_no: String,
+    car_type: String,
+    plate: String,
+) -> Result<(), String> {
+    let card: String = card_no.chars().filter(|c| c.is_ascii_digit()).collect();
+    // JSON-encode for safe embedding in JS (plate/car type are Thai text).
+    let car_type_js = serde_json::to_string(&car_type).map_err(|e| e.to_string())?;
+    let plate_js = serde_json::to_string(&plate).map_err(|e| e.to_string())?;
     if let Some(w) = app.get_webview_window("park") {
+        w.eval(&format!(
+            "window.__timesh1tSendCard && window.__timesh1tSendCard(\"{card}\", {car_type_js}, {plate_js})"
+        ))
+        .map_err(|e| e.to_string())?;
         let _ = w.set_focus();
+        spawn_park_done_poll(app.clone());
         return Ok(());
     }
+    let script = PARK_FILL_SCRIPT
+        .replace("__CARD__", &format!("\"{card}\""))
+        .replace("__CAR_TYPE__", &car_type_js)
+        .replace("__PLATE__", &plate_js);
     tauri::WebviewWindowBuilder::new(
         &app,
         "park",
@@ -488,8 +744,10 @@ async fn open_park_window(app: tauri::AppHandle, url: String) -> Result<(), Stri
     )
     .title("Msync Park")
     .inner_size(1200.0, 850.0)
+    .initialization_script_for_all_frames(&script)
     .build()
     .map_err(|e| e.to_string())?;
+    spawn_park_done_poll(app.clone());
     Ok(())
 }
 

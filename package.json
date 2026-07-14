@@ -1,7 +1,7 @@
 {
   "name": "timesh1t",
   "private": true,
-  "version": "4.4.0",
+  "version": "4.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,7 +23,6 @@
     "@tauri-apps/plugin-updater": "^2.10.1",
     "preact": "^10.25.1",
     "preact-iso": "^2.12.0",
-    "tesseract.js": "^7.0.0",
     "vanilla-calendar-pro": "^3.1.0",
     "xlsx": "^0.18.5"
   },
