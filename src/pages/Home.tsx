@@ -30,6 +30,48 @@ function ymd(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+// Next occurrence of the 26th at 00:00 local time (this month, or next if already past).
+function nextCutoff(from: Date): Date {
+  const d = new Date(from.getFullYear(), from.getMonth(), 26)
+  if (from >= d) d.setMonth(d.getMonth() + 1)
+  return d
+}
+
+function CutoffCountdown() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const target = nextCutoff(now)
+  const secs = Math.max(0, Math.floor((target.getTime() - now.getTime()) / 1000))
+  const days = Math.floor(secs / 86400)
+  const hours = Math.floor(secs / 3600) % 24
+  const mins = Math.floor(secs / 60) % 60
+  const s = secs % 60
+
+  const units: [string, number][] = [['days', days], ['hours', hours], ['min', mins], ['sec', s]]
+
+  return (
+    <div class="flex flex-col items-center gap-2 mb-4">
+      <span class="text-xs opacity-60">
+        Timesheet cutoff — {target.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+      </span>
+      <div class="grid auto-cols-max grid-flow-col gap-3 text-center text-xs">
+        {units.map(([label, value]) => (
+          <div key={label} class="bg-neutral rounded-box text-neutral-content flex flex-col p-2">
+            <span class="countdown font-mono text-2xl">
+              <span style={`--value:${value}`} aria-live="polite" aria-label={`${value}`}>{value}</span>
+            </span>
+            {label}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function defaultFilters(): Filters {
   const now = new Date()
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -247,6 +289,7 @@ export function Home() {
 
   return (
     <div>
+      <CutoffCountdown />
       <div class="flex items-center justify-between mb-4">
         <h1 class="text-2xl font-bold">Timesheets</h1>
         <button

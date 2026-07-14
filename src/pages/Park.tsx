@@ -138,18 +138,24 @@ export function Park() {
 
             <fieldset class="fieldset">
               <label class="label" for="park-card-no">Card no.</label>
-              <input
-                id="park-card-no"
-                class="input input-lg w-full text-center tracking-[0.3em] font-mono"
-                inputmode="numeric"
-                placeholder="000"
-                value={cardNo}
-                onInput={(e) => {
-                  const digits = e.currentTarget.value.replace(/\D/g, '')
-                  e.currentTarget.value = digits
-                  setCardNo(digits)
-                }}
-              />
+              <label class="otp otp-lg mx-auto">
+                <span></span>
+                <span></span>
+                <span></span>
+                <input
+                  id="park-card-no"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength={3}
+                  pattern="[0-9]{3}"
+                  value={cardNo}
+                  onInput={(e) => {
+                    const digits = e.currentTarget.value.replace(/\D/g, '')
+                    e.currentTarget.value = digits
+                    setCardNo(digits)
+                  }}
+                />
+              </label>
             </fieldset>
 
             <div class="card-actions mt-2">

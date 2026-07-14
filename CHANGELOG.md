@@ -3,6 +3,11 @@
 All notable changes to TimeSh1t are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.6.0] - 2026-07-14
+
+- Timesheets: countdown to the monthly cutoff (the 26th, midnight local time) at the top of the page — DaisyUI boxed countdown with days/hours/min/sec, rolling over to next month once the 26th passes.
+- Park: card no. is now a 3-digit OTP-style input (DaisyUI `otp`) instead of a plain text field; digits only.
+
 ## [4.5.1] - 2026-07-14
 
 - Msync fillers (timesheet + park) now tolerate slow loading: dropdown options are polled until they actually render (they're query-backed), and page transitions that trigger backend queries get a 4s settle wait plus longer element timeouts.
