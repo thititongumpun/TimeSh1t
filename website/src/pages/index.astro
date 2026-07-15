@@ -52,16 +52,18 @@ const freeFeatures = [
     glyph: '🔁',
     title: 'Msync auto-fill',
     body: 'Fills your timesheet rows into the company Msync/Appsmith site through an SSO-preserving window.',
+    standout: true,
   },
   {
     glyph: '🚗',
     title: 'Park auto-fill',
     body: 'Carpark registration autofill with vehicle management.',
+    standout: true,
   },
   {
-    glyph: '⏳',
-    title: 'Cutoff countdown',
-    body: 'Always know how long until the monthly timesheet cutoff (26th).',
+    glyph: '🔔',
+    title: 'Missing-day reminders',
+    body: 'A warning banner lists past working days in the current cutoff period with no entry — weekends and company holidays excluded.',
   },
   {
     glyph: '⬆️',
@@ -90,7 +92,7 @@ const comparisonRows = [
   ['Holiday calendar', true, true],
   ['Msync auto-fill', true, true],
   ['Park auto-fill', true, true],
-  ['Cutoff countdown', true, true],
+  ['Missing-day reminders', true, true],
   ['Auto-update', true, true],
   ['Jira Assistant', false, true],
   ['Ask Claude', false, true],
@@ -174,12 +176,22 @@ const comparisonRows = [
       <p class="mt-2 text-[var(--color-muted)]">All free, and works out of the box.</p>
       <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {freeFeatures.map((f) => (
-          <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-            <span class="text-xl">{f.glyph}</span>
+          <div class:list={['rounded-lg border bg-[var(--color-surface)] p-5', f.standout ? 'border-[var(--color-accent)]/50' : 'border-[var(--color-border)]']}>
+            <div class="flex items-start justify-between gap-2">
+              <span class="text-xl">{f.glyph}</span>
+              {f.standout && (
+                <span class="font-mono text-[10px] text-[var(--color-accent)] border border-[var(--color-accent)]/50 rounded-full px-2 py-0.5">⭐ Standout</span>
+              )}
+            </div>
             <h3 class="mt-3 font-semibold">{f.title}</h3>
             <p class="mt-1.5 text-sm text-[var(--color-muted)]">{f.body}</p>
           </div>
         ))}
+      </div>
+
+      <div class="mt-4 rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex flex-wrap items-center gap-3">
+        <span class="font-mono text-xs text-[var(--color-muted)] border border-[var(--color-border)] rounded-full px-2 py-0.5">PLANNED</span>
+        <p class="text-sm text-[var(--color-muted)]">Non-project Msync auto-fill — LEAVE, meetings, and other non-project rows filled the same way.</p>
       </div>
     </div>
   </section>
