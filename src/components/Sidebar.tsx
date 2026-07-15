@@ -193,7 +193,7 @@ export function Sidebar() {
           <span class="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-primary/15 text-primary transition-all duration-300 is-drawer-close:w-0 is-drawer-close:opacity-0">
             <Icon paths={ICONS.clock} />
           </span>
-          <span class="max-w-32 overflow-hidden whitespace-nowrap text-lg font-bold tracking-tight transition-all duration-300 is-drawer-close:max-w-0 is-drawer-close:opacity-0">T1meSh1t</span>
+          <span class="max-w-32 overflow-hidden whitespace-nowrap text-lg font-bold tracking-tight transition-all duration-300 is-drawer-close:max-w-0 is-drawer-close:opacity-0">TimeCheese</span>
           <label
             for="app-drawer"
             aria-label="Toggle sidebar"
@@ -433,7 +433,7 @@ export function Sidebar() {
             <div>
               <div class="flex items-center justify-between gap-4">
                 <div>
-                  <div class="font-medium">T1meSh1t</div>
+                  <div class="font-medium">TimeCheese</div>
                   <div class="text-sm opacity-60">Version {version}</div>
                 </div>
                 <button

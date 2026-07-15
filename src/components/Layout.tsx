@@ -45,7 +45,7 @@ export function Layout({ children }: LayoutProps) {
         >
           {children}
           <footer class="mt-8 pt-4 text-center text-xs opacity-50">
-            © {new Date().getFullYear()} TimeSh1t · v{packageJson.version}
+            © {new Date().getFullYear()} TimeCheese · v{packageJson.version}
           </footer>
           {showTop && (
             <button

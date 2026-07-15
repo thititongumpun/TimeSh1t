@@ -1,7 +1,12 @@
 # Changelog
 
-All notable changes to TimeSh1t are documented here. Format loosely follows
+All notable changes to TimeCheese are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
+
+## [4.7.0] - 2026-07-15
+
+- Renamed the app: TimeSh1t is now **TimeCheese** (say it fast). New app name, window title, login screen, sidebar, and footer branding.
+- Repo moved to `github.com/thititongumpun/TimeCheese`; the old URL redirects, so existing installs pick up this update normally and become TimeCheese in place. No re-login needed.
 
 ## [4.6.0] - 2026-07-14
 
