@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
     paths: ['website/**', 'CHANGELOG.md', '.github/workflows/pages.yml']
-  release:
-    types: [published]
+  # Releases can't trigger this directly (published via GITHUB_TOKEN, which is
+  # recursion-suppressed) — publish.yml dispatches it explicitly instead.
   workflow_dispatch:
 
 permissions:

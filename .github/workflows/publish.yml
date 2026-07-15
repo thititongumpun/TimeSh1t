@@ -78,3 +78,15 @@ jobs:
           prerelease: false
           includeUpdaterJson: true
           args: ${{ matrix.args }}
+
+  # The release is published with GITHUB_TOKEN, whose events don't trigger other
+  # workflows — dispatch the website deploy explicitly so download links update.
+  refresh-website:
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - run: gh workflow run pages.yml --repo ${{ github.repository }} --ref main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
