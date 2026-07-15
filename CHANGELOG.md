@@ -3,6 +3,12 @@
 All notable changes to TimeCheese are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.8.0] - 2026-07-16
+
+- **Missing-day reminders**: the Home page now warns about past working days in the current cutoff period (27th → 26th) with no timesheet entry. Weekends and company holidays are skipped, entries already swept to the archive still count, and the banner clears itself when you add the entry.
+- New cheese app icon, matching the docs website.
+- Docs & download website: https://thititongumpun.github.io/TimeCheese/ — features, changelog, quickstart, and always-current download links.
+
 ## [4.7.0] - 2026-07-15
 
 - Renamed the app: TimeSh1t is now **TimeCheese** (say it fast). New app name, window title, login screen, sidebar, and footer branding.
