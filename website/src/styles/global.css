@@ -8,6 +8,7 @@
   --color-muted: #a3947c;
   --color-accent: #f5b82e;
   --color-accent-deep: #c98a12;
+  --color-on-accent: #14100b;
 
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -16,6 +17,17 @@
 
 html {
   color-scheme: dark;
+}
+
+html[data-theme='light'] {
+  --color-bg: #faf6ec;
+  --color-surface: #fffdf7;
+  --color-border: #e6dcc3;
+  --color-text: #2b2214;
+  --color-muted: #8a7a5e;
+  --color-accent: #b07d10;
+  --color-accent-deep: #8f6209;
+  color-scheme: light;
 }
 
 body {
@@ -35,7 +47,20 @@ body {
 
 ::selection {
   background: var(--color-accent);
-  color: var(--color-bg);
+  color: var(--color-on-accent);
+}
+
+/* Theme toggle icon swap */
+#theme-toggle .theme-icon-light {
+  display: none;
+}
+
+html[data-theme='light'] #theme-toggle .theme-icon-dark {
+  display: none;
+}
+
+html[data-theme='light'] #theme-toggle .theme-icon-light {
+  display: inline;
 }
 
 /* Signature "day timeline" graphic */

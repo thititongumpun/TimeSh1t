@@ -26,6 +26,13 @@ const nav = [
     <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
     <meta name="description" content={description} />
     <title>{title}</title>
+    <script is:inline>
+      (function () {
+        var stored = localStorage.getItem('theme');
+        var theme = stored || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
   </head>
   <body class="min-h-screen flex flex-col overflow-x-hidden">
     <header class="border-b border-[var(--color-border)]">
@@ -40,6 +47,15 @@ const nav = [
             </li>
           ))}
         </ul>
+        <button
+          id="theme-toggle"
+          type="button"
+          aria-label="Toggle theme"
+          class="cursor-pointer text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors"
+        >
+          <span class="theme-icon-dark">☀</span>
+          <span class="theme-icon-light">☾</span>
+        </button>
       </nav>
     </header>
 
@@ -48,8 +64,7 @@ const nav = [
     </main>
 
     <footer class="border-t border-[var(--color-border)] mt-16">
-      <div class="max-w-5xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm text-[var(--color-muted)]">
-        <p>Built with Tauri + Preact + Supabase.</p>
+      <div class="max-w-5xl mx-auto px-6 py-10 flex justify-end gap-4 text-sm text-[var(--color-muted)]">
         <ul class="flex flex-wrap gap-6">
           <li><a href="https://github.com/thititongumpun/TimeCheese" class="hover:text-[var(--color-accent)]">GitHub</a></li>
           <li><a href={`${base}/changelog/`} class="hover:text-[var(--color-accent)]">Changelog</a></li>
@@ -58,5 +73,15 @@ const nav = [
         </ul>
       </div>
     </footer>
+    <script is:inline>
+      (function () {
+        var btn = document.getElementById('theme-toggle');
+        btn.addEventListener('click', function () {
+          var next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+          document.documentElement.dataset.theme = next;
+          localStorage.setItem('theme', next);
+        });
+      })();
+    </script>
   </body>
 </html>
