@@ -1,0 +1,22 @@
+[
+  {
+    "date": "2026-07-16",
+    "scope": "app",
+    "macrostructure": "Marquee Hero (index) / Long Document (content)",
+    "theme": "studied-DNA (source: https://www.usehallmark.com/examples/carnival-01/ — Carnival/Cold Snap structure+decoration only, brand tokens retained)",
+    "nav": "N1b (border-2 decorated)",
+    "footer": "Ft2 (border-2 decorated)",
+    "enrichment": "Tier-A CSS art (day-timeline, proof panels) + marquee strip",
+    "brief": "Carnival poster DNA locked into design.md; layout+decoration redesign on preserved TimeCheese palette"
+  },
+  {
+    "date": "2026-07-16",
+    "scope": "app",
+    "macrostructure": "Split Studio (index) / Long Document (content)",
+    "theme": "preserved brand (warm-dark · gold · Bricolage)",
+    "nav": "N1b",
+    "footer": "Ft2",
+    "enrichment": "Tier-A CSS art (day-timeline hero, auto-fill proof panels)",
+    "brief": "TimeCheese website — fix audit criticals (AI nav, feature card grids) and redesign within existing brand"
+  }
+]

@@ -1,11 +1,9 @@
 ---
-import { readFileSync } from 'node:fs';
 import { marked } from 'marked';
 import Base from '../layouts/Base.astro';
 
-// website/src/pages/changelog.astro -> repo root CHANGELOG.md
-const changelogPath = new URL('../../../CHANGELOG.md', import.meta.url);
-const raw = readFileSync(changelogPath, 'utf-8');
+// website/src/pages/changelog.astro -> repo root CHANGELOG.md, inlined at build time
+import raw from '../../../CHANGELOG.md?raw';
 
 // Split on "## [" headings; skip the top-level "# Changelog" preamble.
 const sections = raw.split(/\n(?=## \[)/).slice(1);

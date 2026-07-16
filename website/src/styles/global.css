@@ -1,3 +1,8 @@
+/* Hallmark · genre: editorial-loud · macrostructure: Marquee Hero (index) / Long Document (content)
+ * theme: preserved brand (warm-dark paper · gold duo-tone · Bricolage poster caps) · studied: yes · DNA-source: url
+ * source-url: https://www.usehallmark.com/examples/carnival-01/ (Carnival · Cold Snap — structure/decoration only, brand tokens retained)
+ * nav: N1b (border-2 rule) · footer: Ft2 · design-system: design.md · designed-as-app
+ */
 @import "tailwindcss";
 
 @theme {
@@ -17,6 +22,19 @@
 
 html {
   color-scheme: dark;
+}
+
+html, body {
+  overflow-x: clip;
+}
+
+h1, h2, h3 {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+a:active, button:active {
+  translate: 0 1px;
 }
 
 html[data-theme='light'] {
@@ -202,4 +220,27 @@ html[data-theme='light'] #theme-toggle .theme-icon-light {
   border-radius: 0.25rem;
   padding: 0.1rem 0.35rem;
   font-size: 0.85em;
+}
+
+/* Marquee banner (hero only) */
+.marquee {
+  overflow: clip;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 32s linear infinite;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
 }

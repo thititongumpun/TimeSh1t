@@ -16,6 +16,9 @@ const nav = [
   { href: `${base}/docs/quickstart/`, label: 'Quickstart' },
   { href: `${base}/docs/getting-access/`, label: 'Getting access' },
 ];
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '');
+const isActive = (href: string) => currentPath === href.replace(/\/$/, '');
 ---
 
 <!doctype html>
@@ -34,28 +37,50 @@ const nav = [
       })();
     </script>
   </head>
-  <body class="min-h-screen flex flex-col overflow-x-hidden">
-    <header class="border-b border-[var(--color-border)]">
-      <nav class="max-w-5xl mx-auto flex items-center justify-between px-6 py-4">
-        <a href={`${base}/`} class="font-display text-lg font-bold tracking-tight text-[var(--color-text)] hover:text-[var(--color-accent)]">
+  <body class="min-h-screen flex flex-col">
+    <header class="border-b-2 border-[var(--color-border)]">
+      <nav class="max-w-5xl mx-auto grid grid-cols-[1fr_auto_1fr] items-center h-16 px-6">
+        <a
+          href={`${base}/`}
+          class="justify-self-start font-display text-lg font-bold tracking-tight text-[var(--color-text)] hover:text-[var(--color-accent)]"
+        >
           🧀 TimeCheese
         </a>
-        <ul class="flex items-center gap-6 text-sm text-[var(--color-muted)]">
+        <ul class="hidden md:flex justify-self-center gap-6 text-sm">
           {nav.slice(1).map((item) => (
             <li>
-              <a href={item.href} class="hover:text-[var(--color-accent)] transition-colors">{item.label}</a>
+              <a
+                href={item.href}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+                class:list={[
+                  'whitespace-nowrap transition-colors',
+                  isActive(item.href)
+                    ? 'text-[var(--color-accent)] underline underline-offset-4 decoration-2'
+                    : 'text-[var(--color-muted)] hover:text-[var(--color-accent)]',
+                ]}
+              >
+                {item.label}
+              </a>
             </li>
           ))}
         </ul>
-        <button
-          id="theme-toggle"
-          type="button"
-          aria-label="Toggle theme"
-          class="cursor-pointer text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors"
-        >
-          <span class="theme-icon-dark">☀</span>
-          <span class="theme-icon-light">☾</span>
-        </button>
+        <div class="justify-self-end flex items-center gap-3">
+          <button
+            id="theme-toggle"
+            type="button"
+            aria-label="Toggle theme"
+            class="cursor-pointer text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors"
+          >
+            <span class="theme-icon-dark">☀</span>
+            <span class="theme-icon-light">☾</span>
+          </button>
+          <a
+            href={`${base}/#download`}
+            class="inline-flex min-h-11 items-center whitespace-nowrap uppercase rounded-md bg-[var(--color-accent)] px-3.5 py-2 text-sm font-semibold text-[var(--color-on-accent)] shadow-[3px_3px_0_0_var(--color-border)] hover:bg-[var(--color-accent-deep)] transition-colors"
+          >
+            Download
+          </a>
+        </div>
       </nav>
     </header>
 
@@ -63,7 +88,7 @@ const nav = [
       <slot />
     </main>
 
-    <footer class="border-t border-[var(--color-border)] mt-16">
+    <footer class="border-t-2 border-[var(--color-border)] mt-16">
       <div class="max-w-5xl mx-auto px-6 py-10 flex justify-end gap-4 text-sm text-[var(--color-muted)]">
         <ul class="flex flex-wrap gap-6">
           <li><a href="https://github.com/thititongumpun/TimeCheese" class="hover:text-[var(--color-accent)]">GitHub</a></li>
