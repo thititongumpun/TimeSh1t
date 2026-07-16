@@ -18,6 +18,8 @@
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html {
@@ -241,6 +243,76 @@ html[data-theme='light'] #theme-toggle .theme-icon-light {
 
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
+    animation: none;
+  }
+}
+
+/* Screenshot lightbox trigger */
+.shot {
+  display: block;
+  overflow: hidden;
+}
+
+.shot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.shot img {
+  transition: transform 200ms var(--ease-out);
+}
+
+.shot:hover img,
+.shot:focus-visible img {
+  transform: scale(1.02);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shot img {
+    transition: none;
+  }
+
+  .shot:hover img,
+  .shot:focus-visible img {
+    transform: none;
+  }
+}
+
+/* Lightbox dialog */
+.lightbox {
+  border: none;
+  background: transparent;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+}
+
+.lightbox img {
+  display: block;
+  max-width: 92vw;
+  max-height: 92vh;
+  cursor: zoom-out;
+}
+
+.lightbox::backdrop {
+  background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+}
+
+.lightbox[open] {
+  animation: lightbox-in 200ms var(--ease-out) both;
+}
+
+@keyframes lightbox-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox[open] {
     animation: none;
   }
 }

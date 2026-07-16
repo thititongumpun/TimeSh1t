@@ -98,6 +98,11 @@ const isActive = (href: string) => currentPath === href.replace(/\/$/, '');
         </ul>
       </div>
     </footer>
+
+    <dialog id="lightbox" class="lightbox">
+      <img id="lightbox-img" src="" alt="" />
+    </dialog>
+
     <script is:inline>
       (function () {
         var btn = document.getElementById('theme-toggle');
@@ -105,6 +110,29 @@ const isActive = (href: string) => currentPath === href.replace(/\/$/, '');
           var next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
           document.documentElement.dataset.theme = next;
           localStorage.setItem('theme', next);
+        });
+      })();
+    </script>
+    <script is:inline>
+      (function () {
+        var dialog = document.getElementById('lightbox');
+        var img = document.getElementById('lightbox-img');
+        document.querySelectorAll('main a.shot').forEach(function (link) {
+          link.addEventListener('click', function (e) {
+            var thumb = link.querySelector('img');
+            if (!thumb) return;
+            e.preventDefault();
+            img.src = link.href;
+            img.alt = thumb.alt;
+            dialog.showModal();
+          });
+        });
+        dialog.addEventListener('click', function () {
+          dialog.close();
+        });
+        dialog.addEventListener('close', function () {
+          img.src = '';
+          img.alt = '';
         });
       })();
     </script>
