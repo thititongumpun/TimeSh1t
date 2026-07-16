@@ -14,11 +14,13 @@ description: Get TimeCheese installed and log your first entry.
 first time you open it you may need to right-click the app and choose **Open** instead of
 double-clicking — macOS Gatekeeper otherwise blocks it.
 
-## 2. Sign in
+## 2. Request access
 
-Sign in with the email and password your admin provisioned for you. If this is your first time,
-you'll get an email OTP flow to set a password. There is no sign-up screen — accounts are created
-by an administrator, by design.
+First time? Click **New here? Request access** on the sign-in screen. Enter your email, then
+the 6-digit code that arrives, then choose a password. You'll land on a **waiting for admin
+approval** screen — ping your admin, and once they approve you, click **Check again** to get in.
+After that, just sign in with your email and password. See [Getting access](../getting-access/)
+for the full walkthrough.
 
 ## 3. Log an entry
 

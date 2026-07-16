@@ -1,8 +1,8 @@
 import { useState } from 'preact/hooks'
-import { signIn, sendSetupCode, verifyCodeAndSetPassword } from '../services/auth'
+import { signIn, sendSignupCode, verifyCodeAndSetPassword } from '../services/auth'
 
 export function Login() {
-  const [mode, setMode] = useState<'signin' | 'setup'>('signin')
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
@@ -24,12 +24,9 @@ export function Login() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const { error } = await sendSetupCode(email)
+    const { error } = await sendSignupCode(email)
     if (error) {
-      // shouldCreateUser:false → unknown emails get "Signups not allowed for otp"
-      setError(/signups? not allowed/i.test(error.message)
-        ? 'No account found for this email. Ask your admin to add you first.'
-        : error.message)
+      setError(error.message)
     } else {
       setCodeSent(true)
       setInfo('Check your email for a 6-digit code.')
@@ -47,7 +44,7 @@ export function Login() {
     setLoading(false)
   }
 
-  function switchMode(next: 'signin' | 'setup') {
+  function switchMode(next: 'signin' | 'signup') {
     setMode(next)
     setError(null)
     setInfo(null)
@@ -58,9 +55,13 @@ export function Login() {
 
   return (
     <div class="min-h-screen flex items-center justify-center bg-base-100">
-      <div class="card w-96 bg-base-200 shadow-xl">
+      <div class="card w-96 bg-base-200 border-2 border-base-300">
         <div class="card-body">
-          <h2 class="card-title text-2xl mb-2">TimeCheese</h2>
+          <h2 class="card-title font-display font-extrabold text-2xl mb-1">TimeCheese</h2>
+          <p class="text-sm opacity-60 -mt-1 mb-4">
+            {mode === 'signin' && 'Sign in to your account'}
+            {mode === 'signup' && (codeSent ? 'Enter the code and choose a password' : "We'll email you a verification code")}
+          </p>
 
           {error && (
             <div class="alert alert-error mb-4">
@@ -101,22 +102,23 @@ export function Login() {
                 {loading && <span class="loading loading-spinner loading-xs mr-2" />}
                 Sign in
               </button>
+              <div class="divider my-2 text-xs opacity-50">or</div>
               <button
                 type="button"
-                class="btn btn-ghost btn-sm w-full mt-2 normal-case"
-                onClick={() => switchMode('setup')}
+                class="btn btn-ghost btn-sm w-full normal-case"
+                onClick={() => switchMode('signup')}
               >
-                First time? Set up your password
+                New here? Request access
               </button>
             </form>
           )}
 
-          {mode === 'setup' && (
+          {mode === 'signup' && (
             <form onSubmit={codeSent ? handleSetPassword : handleSendCode}>
               <div class="fieldset mb-4">
-                <label class="label" for="setup-email">Email</label>
+                <label class="label" for="code-email">Email</label>
                 <input
-                  id="setup-email"
+                  id="code-email"
                   type="email"
                   class="input w-full"
                   value={email}
@@ -158,7 +160,7 @@ export function Login() {
 
               <button type="submit" class="btn btn-primary w-full" disabled={loading}>
                 {loading && <span class="loading loading-spinner loading-xs mr-2" />}
-                {codeSent ? 'Set password & sign in' : 'Email me a code'}
+                {codeSent ? 'Set password & sign in' : 'Send me a code'}
               </button>
               <button
                 type="button"

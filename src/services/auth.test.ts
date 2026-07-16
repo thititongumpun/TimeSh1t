@@ -1,18 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+const mockFrom = vi.hoisted(() => vi.fn())
 vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
       getSession: vi.fn(),
+      signInWithOtp: vi.fn(),
     },
+    from: mockFrom,
   },
 }))
 
 import { supabase } from '../lib/supabase'
-import { signIn, signOut, getSession } from './auth'
+import { signIn, signOut, getSession, sendSignupCode, getMyApproval } from './auth'
 import { currentUser, authLoading } from '../store/auth'
+
+function makeChain(result: any) {
+  return {
+    select: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue(result),
+  }
+}
 
 describe('auth service', () => {
   beforeEach(() => {
@@ -71,5 +81,29 @@ describe('auth service', () => {
 
     await getSession()
     expect(currentUser.value).toBeNull()
+  })
+
+  it('sendSignupCode requests an OTP that can create a new account', async () => {
+    vi.mocked(supabase.auth.signInWithOtp).mockResolvedValue({ data: {}, error: null } as any)
+
+    await sendSignupCode('a@b.c')
+
+    expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
+      email: 'a@b.c',
+      options: { shouldCreateUser: true },
+    })
+  })
+
+  it('getMyApproval selects approved from the caller\'s own profile row', async () => {
+    const result = { data: { approved: true }, error: null }
+    const chain = makeChain(result)
+    mockFrom.mockReturnValue(chain)
+
+    const returned = await getMyApproval()
+
+    expect(mockFrom).toHaveBeenCalledWith('profiles')
+    expect(chain.select).toHaveBeenCalledWith('approved')
+    expect(chain.single).toHaveBeenCalled()
+    expect(returned).toEqual(result)
   })
 })

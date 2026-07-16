@@ -7,10 +7,9 @@ export async function signIn(email: string, password: string) {
   return { data, error }
 }
 
-// First-time setup: email a 6-digit code to an already-provisioned user.
-// shouldCreateUser:false so only dashboard-created accounts can request one.
-export async function sendSetupCode(email: string) {
-  return supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } })
+// New-user signup: emails a 6-digit code and creates the account.
+export async function sendSignupCode(email: string) {
+  return supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
 }
 
 // Verify the emailed code (signs them in), then set their chosen password.
@@ -55,4 +54,9 @@ export async function getSession() {
   const { data, error } = await supabase.auth.getSession()
   if (!error && data.session) currentUser.value = data.session.user
   return { data, error }
+}
+
+// RLS limits profiles to the caller's own row.
+export async function getMyApproval() {
+  return supabase.from('profiles').select('approved').single()
 }
