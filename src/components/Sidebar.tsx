@@ -195,7 +195,7 @@ export function Sidebar() {
           <span class="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-primary/15 text-primary transition-all duration-300 is-drawer-close:w-0 is-drawer-close:opacity-0">
             <Icon paths={ICONS.clock} />
           </span>
-          <span class="max-w-32 overflow-hidden whitespace-nowrap text-lg font-bold tracking-tight transition-all duration-300 is-drawer-close:max-w-0 is-drawer-close:opacity-0">TimeCheese</span>
+          <span class="max-w-32 overflow-hidden whitespace-nowrap font-display text-lg font-extrabold tracking-tight transition-all duration-300 is-drawer-close:max-w-0 is-drawer-close:opacity-0">TimeCheese</span>
           <label
             for="app-drawer"
             aria-label="Toggle sidebar"
@@ -220,10 +220,10 @@ export function Sidebar() {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               data-tip={item.label}
-              class={`flex items-center gap-3 rounded-lg py-2 pr-3 text-sm transition-colors is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:gap-2 is-drawer-close:pr-1.5 ${
+              class={`flex items-center gap-3 rounded-lg py-2 pr-3 text-sm transition-opacity is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:gap-2 is-drawer-close:pr-1.5 ${
                 active
-                  ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-base-content/70 hover:bg-base-300/60 hover:text-base-content'
+                  ? 'font-medium text-primary opacity-100'
+                  : 'opacity-70 hover:opacity-100'
               }`}
             >
               <span class={`h-5 w-0.5 rounded-full ${active ? 'bg-primary' : 'bg-transparent'}`} />
@@ -243,7 +243,7 @@ export function Sidebar() {
       <div class="px-3 pb-1">
         <div class="flex items-center gap-2 px-2 py-1 text-sm opacity-80 is-drawer-close:hidden">
           <span class="inline-block h-2 w-2 rounded-full bg-success" />
-          {online.length} online
+          <span class="font-mono tabular-nums">{online.length}</span> online
         </div>
         <div class="mt-1 flex flex-wrap gap-1 px-2 is-drawer-close:justify-center is-drawer-close:px-0">
           {online.map((u) => (
@@ -331,7 +331,7 @@ export function Sidebar() {
         <div class="modal modal-open" role="dialog" aria-modal="true" aria-labelledby="settings-title">
           <div class="modal-box max-w-md">
             <div class="flex items-center justify-between">
-              <h2 id="settings-title" class="text-xl font-bold">Settings</h2>
+              <h2 id="settings-title" class="font-display text-xl font-bold">Settings</h2>
               <button
                 class="btn btn-circle btn-ghost btn-sm"
                 aria-label="Close settings"
@@ -506,7 +506,7 @@ export function Sidebar() {
         <div class="modal modal-open" role="dialog" aria-modal="true" aria-labelledby="update-title">
           <div class="modal-box max-w-md">
             <div class="flex items-center justify-between">
-              <h2 id="update-title" class="text-xl font-bold">Update available</h2>
+              <h2 id="update-title" class="font-display text-xl font-bold">Update available</h2>
               <button
                 class="btn btn-circle btn-ghost btn-sm"
                 aria-label="Close update"

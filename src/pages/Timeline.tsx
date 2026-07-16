@@ -60,10 +60,15 @@ export function Timeline() {
     }
   }, [rows])
 
+  const totalEntries = rows.length
+
   return (
-    <div class="p-4 max-w-3xl mx-auto">
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold">Timeline</h1>
+    <div class="p-6 max-w-3xl mx-auto">
+      <header class="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="font-display font-bold text-2xl">Timeline</h1>
+          <p class="text-sm opacity-60 font-mono">{totalEntries} entr{totalEntries === 1 ? 'y' : 'ies'} archived in {year}</p>
+        </div>
         <select
           class="select select-sm"
           value={year}
@@ -71,14 +76,14 @@ export function Timeline() {
         >
           {YEARS.map((y) => <option value={y}>{y}</option>)}
         </select>
-      </div>
+      </header>
 
       {error && <div class="alert alert-error mb-4"><span>{error}</span></div>}
 
       {loading ? (
         <div class="flex justify-center py-12"><span class="loading loading-spinner loading-lg" /></div>
       ) : months.length === 0 ? (
-        <p class="text-base-content/60 py-12 text-center">No archived entries for {year}.</p>
+        <p class="text-base-content/60 py-12 text-center font-mono text-sm">No archived entries for {year}.</p>
       ) : (
         <ul class="timeline timeline-vertical">
           {months.map((m, i) => {
@@ -92,10 +97,10 @@ export function Timeline() {
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
                   </svg>
                 </div>
-                <div class={`${i % 2 === 0 ? 'timeline-start' : 'timeline-end'} timeline-box`}>
+                <div class={`${i % 2 === 0 ? 'timeline-start' : 'timeline-end'} timeline-box border-2 border-base-300 shadow-none`}>
                   <div class="flex items-center justify-between gap-2 mb-1">
-                    <span class="font-semibold">{MONTHS[m - 1]} {year}</span>
-                    <span class="text-xs text-base-content/60">{entries.length} entr{entries.length === 1 ? 'y' : 'ies'}</span>
+                    <span class="font-semibold font-mono">{MONTHS[m - 1]} {year}</span>
+                    <span class="badge badge-ghost badge-sm font-mono">{entries.length} entr{entries.length === 1 ? 'y' : 'ies'}</span>
                   </div>
                   {(!d || d.status === 'loading') && <span class="loading loading-spinner loading-xs" />}
                   {d?.status === 'error' && (

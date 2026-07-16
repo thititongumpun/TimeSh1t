@@ -99,7 +99,7 @@ export function TimesheetModal({ timesheet, projects, onClose }: Props) {
   return (
     <dialog class="modal modal-open">
       <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">
+        <h3 class="font-display font-bold text-lg mb-4">
           {timesheet ? 'Edit Entry' : 'New Entry'}
         </h3>
         <form onSubmit={handleSubmit}>

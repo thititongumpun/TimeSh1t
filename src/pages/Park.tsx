@@ -117,10 +117,14 @@ export function Park() {
 
   return (
     <div class="p-6">
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold">Park</h1>
-        <p class="text-sm opacity-60">Validate your carpark card in Msync — type the card no. and send.</p>
-      </div>
+      <header class="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="font-display font-bold text-2xl">Park</h1>
+          <p class="text-sm opacity-60 font-mono">
+            {vehicles.length} vehicle{vehicles.length === 1 ? '' : 's'}{selected ? ` · sending as ${selected.license_plate}` : ''}
+          </p>
+        </div>
+      </header>
 
       {error && (
         <div class="alert alert-error mb-4 max-w-4xl">
@@ -130,7 +134,7 @@ export function Park() {
 
       <div class="grid gap-6 lg:grid-cols-2 max-w-4xl items-start">
         {/* Send card */}
-        <div class="card bg-base-200 shadow-sm">
+        <div class="card bg-base-200 border-2 border-base-300">
           <div class="card-body">
             <h2 class="card-title text-base">
               <span aria-hidden="true">🎫</span> Carpark card
@@ -160,7 +164,7 @@ export function Park() {
 
             <div class="card-actions mt-2">
               <button
-                class="btn btn-accent btn-block"
+                class="btn btn-primary btn-block"
                 onClick={sendToMsync}
                 disabled={!cardNo || !selected || sending}
               >
@@ -177,7 +181,7 @@ export function Park() {
         </div>
 
         {/* Vehicles card */}
-        <div class="card bg-base-200 shadow-sm">
+        <div class="card bg-base-200 border-2 border-base-300">
           <div class="card-body">
             <h2 class="card-title text-base">
               <span aria-hidden="true">🚙</span> My vehicles
@@ -190,7 +194,7 @@ export function Park() {
             ) : (
               <ul>
                 {vehicles.map((v) => (
-                  <li key={v.id} class="flex items-center gap-3 border-b border-base-300 py-2 last:border-none">
+                  <li key={v.id} class="flex items-center gap-3 border-b border-base-300 py-2 last:border-none hover:bg-base-100 transition-colors">
                     <input
                       type="radio"
                       name="default-vehicle"
@@ -200,9 +204,9 @@ export function Park() {
                       aria-label={`Use ${v.license_plate}`}
                     />
                     <span class="text-xl" aria-hidden="true">{TYPE_ICON[v.vehicle_type]}</span>
-                    <span class="flex-1">
-                      <span class="font-medium">{v.license_plate}</span>
-                      <span class="block text-xs opacity-60">{MSYNC_TYPE[v.vehicle_type]}</span>
+                    <span class="flex-1 flex items-center gap-2">
+                      <span class="font-mono font-medium">{v.license_plate}</span>
+                      <span class="badge badge-ghost badge-sm">{MSYNC_TYPE[v.vehicle_type]}</span>
                     </span>
                     {v.is_default && <span class="badge badge-accent badge-sm">default</span>}
                     <button
@@ -227,14 +231,14 @@ export function Park() {
                 <option value="motorcycle">มอเตอร์ไซต์</option>
               </select>
               <input
-                class="input input-sm join-item flex-1"
+                class="input input-sm join-item flex-1 font-mono"
                 placeholder="License plate"
                 value={newPlate}
                 onInput={(e) => setNewPlate(e.currentTarget.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && newPlate.trim() && !saving) addVehicle() }}
               />
               <button
-                class="btn btn-sm btn-primary join-item"
+                class="btn btn-sm btn-outline join-item"
                 onClick={addVehicle}
                 disabled={!newPlate.trim() || saving}
               >
@@ -248,7 +252,7 @@ export function Park() {
 
       {/* Fill log */}
       {isTauri && fillLog.length > 0 && (
-        <div class="card bg-base-200 shadow-sm mt-6 max-w-4xl">
+        <div class="card bg-base-200 border-2 border-base-300 mt-6 max-w-4xl">
           <div class="card-body">
             <div class="flex items-center justify-between">
               <h2 class="card-title text-base">
@@ -267,9 +271,9 @@ export function Park() {
             </div>
             <ul class="text-sm">
               {fillLog.map((run) => (
-                <li key={run.at} class="flex justify-between border-b border-base-300 py-1 last:border-none">
+                <li key={run.at} class="flex justify-between border-b border-base-300 py-1 last:border-none hover:bg-base-100 transition-colors">
                   <span class="font-mono">Card {run.cardNo}</span>
-                  <span class="opacity-60">{new Date(run.at).toLocaleString()}</span>
+                  <span class="opacity-60 font-mono">{new Date(run.at).toLocaleString()}</span>
                 </li>
               ))}
             </ul>

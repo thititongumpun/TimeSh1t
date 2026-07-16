@@ -35,8 +35,8 @@ export function ProjectModal({ project, onClose }: Props) {
 
   return (
     <dialog class="modal modal-open">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">{project ? 'Edit Project' : 'New Project'}</h3>
+      <div class="modal-box border-2 border-base-300">
+        <h3 class="font-display font-bold text-lg mb-4">{project ? 'Edit Project' : 'New Project'}</h3>
         <form onSubmit={handleSubmit}>
           {error && (
             <div class="alert alert-error mb-4">

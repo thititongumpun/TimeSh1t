@@ -51,7 +51,7 @@ describe('Sidebar', () => {
     fireEvent.click(screen.getByRole('button', { name: /open user settings/i }))
 
     const themeSelect = screen.getByRole('combobox', { name: /theme/i })
-    expect(themeSelect).toHaveValue('dark')
+    expect(themeSelect).toHaveValue('timecheese')
     fireEvent.change(themeSelect, { target: { value: 'retro' } })
 
     expect(document.documentElement.dataset.theme).toBe('retro')

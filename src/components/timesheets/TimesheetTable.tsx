@@ -32,15 +32,15 @@ export function TimesheetTable({
   const [actionTimesheet, setActionTimesheet] = useState<TimesheetWithProject | null>(null)
 
   if (timesheets.length === 0) {
-    return <p class="text-base-content/50 py-8 text-center">No timesheet entries found.</p>
+    return <p class="font-mono text-sm opacity-60 py-16 text-center">No timesheet entries found.</p>
   }
 
   return (
     <>
-      <div class="overflow-x-auto">
-        <table class="table table-zebra">
+      <div class="overflow-x-auto border-2 border-base-300 rounded-box">
+        <table class="table">
           <thead>
-            <tr>
+            <tr class="text-xs uppercase tracking-wide opacity-60">
               <th class="w-px">
                 <input
                   type="checkbox"
@@ -61,7 +61,7 @@ export function TimesheetTable({
           </thead>
           <tbody>
             {timesheets.map((t) => (
-              <tr key={t.id} class={selectedIds.has(t.id) ? 'bg-base-200' : undefined}>
+              <tr key={t.id} class={selectedIds.has(t.id) ? 'bg-base-200' : 'hover:bg-base-200'}>
                 <td class="w-px">
                   <input
                     type="checkbox"
@@ -71,7 +71,7 @@ export function TimesheetTable({
                     onChange={() => onToggleSelect(t.id)}
                   />
                 </td>
-                <td class="whitespace-nowrap">
+                <td class="whitespace-nowrap font-mono">
                   {new Date(t.date_memo).toLocaleDateString()}
                   {t.start_time && t.end_time && (
                     <div class="text-xs text-base-content/60">
@@ -84,7 +84,9 @@ export function TimesheetTable({
                 </td>
                 <td>{t.projects?.project_name ?? <span class="text-base-content/30">—</span>}</td>
                 <td>
-                  <input type="checkbox" class="checkbox checkbox-sm checkbox-accent" checked={t.is_complete} disabled />
+                  <span class={t.is_complete ? 'badge badge-success' : 'badge badge-ghost'}>
+                    {t.is_complete ? 'Done' : 'Open'}
+                  </span>
                 </td>
                 <td class="min-w-64 max-w-md">
                   {t.ai_summary ? (
@@ -133,7 +135,7 @@ export function TimesheetTable({
         >
           <div class="modal-box max-w-sm">
             <div class="flex items-center justify-between gap-4">
-              <h2 id="timesheet-actions-title" class="text-lg font-bold">Timesheet actions</h2>
+              <h2 id="timesheet-actions-title" class="font-display text-lg font-bold">Timesheet actions</h2>
               <button
                 class="btn btn-circle btn-ghost btn-sm"
                 aria-label="Close timesheet actions"

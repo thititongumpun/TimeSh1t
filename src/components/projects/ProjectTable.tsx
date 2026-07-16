@@ -8,14 +8,14 @@ interface Props {
 
 export function ProjectTable({ projects, onEdit, onDelete }: Props) {
   if (projects.length === 0) {
-    return <p class="text-base-content/50 py-8 text-center">No projects yet.</p>
+    return <p class="font-mono text-sm opacity-60 py-8 text-center">No projects yet.</p>
   }
 
   return (
-    <div class="overflow-x-auto">
-      <table class="table table-zebra">
+    <div class="overflow-x-auto border-2 border-base-300 rounded-box">
+      <table class="table">
         <thead>
-          <tr>
+          <tr class="text-xs tracking-wide uppercase opacity-60">
             <th>Project No.</th>
             <th>Project Name</th>
             <th>Status</th>
@@ -25,15 +25,15 @@ export function ProjectTable({ projects, onEdit, onDelete }: Props) {
         </thead>
         <tbody>
           {projects.map((p) => (
-            <tr key={p.id}>
-              <td>{p.project_no}</td>
+            <tr key={p.id} class="hover:bg-base-200">
+              <td class="font-mono">{p.project_no}</td>
               <td>{p.project_name}</td>
               <td>
                 <span class={`badge ${p.is_active ? 'badge-success' : 'badge-ghost'}`}>
                   {p.is_active ? 'Active' : 'Inactive'}
                 </span>
               </td>
-              <td>{new Date(p.inserted_at).toLocaleDateString()}</td>
+              <td class="font-mono">{new Date(p.inserted_at).toLocaleDateString()}</td>
               <td class="flex gap-1">
                 <button class="btn btn-ghost btn-xs" onClick={() => onEdit(p)}>
                   Edit

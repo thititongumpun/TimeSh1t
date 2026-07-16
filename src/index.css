@@ -1,4 +1,89 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench family · design-system: design.md · designed-as-app */
+@import '@fontsource-variable/bricolage-grotesque';
 @import "tailwindcss";
+
+@theme {
+  --font-display: 'Bricolage Grotesque Variable', ui-sans-serif, sans-serif;
+}
+
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark, retro, nord, abyss, aqua, lofi, acid, dracula;
+  themes: timecheese --default, timecheese-dark --prefersdark, light, dark, retro, nord, abyss, aqua, lofi, acid, dracula;
+}
+
+@plugin "daisyui/theme" {
+  name: "timecheese";
+  color-scheme: light;
+  --color-base-100: oklch(98% 0.012 95);   /* warm paper, from #fffdf7 */
+  --color-base-200: oklch(96.5% 0.016 92); /* from #faf6ec */
+  --color-base-300: oklch(90% 0.03 90);    /* from #e6dcc3 */
+  --color-base-content: oklch(26% 0.028 75); /* warm ink, from #2b2214 */
+  --color-primary: oklch(70% 0.145 78);      /* deep-amber-leaning gold — passes 4.5:1 with primary-content */
+  --color-primary-content: oklch(17% 0.02 75);
+  --color-secondary: oklch(55% 0.11 75);     /* deep amber, from #8f6209 */
+  --color-secondary-content: oklch(98% 0.012 95);
+  --color-accent: oklch(82% 0.16 84);        /* cheese gold, from #f5b82e */
+  --color-accent-content: oklch(17% 0.02 75);
+  --color-neutral: oklch(30% 0.03 75);
+  --color-neutral-content: oklch(96.5% 0.016 92);
+  --color-info: oklch(54% 0.11 240);
+  --color-info-content: oklch(98% 0.01 240);
+  --color-success: oklch(53% 0.12 150);
+  --color-success-content: oklch(98% 0.01 150);
+  --color-warning: oklch(75% 0.15 80);
+  --color-warning-content: oklch(20% 0.03 80);
+  --color-error: oklch(55% 0.19 28);
+  --color-error-content: oklch(98% 0.01 28);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 2px;      /* brand 2px rule voice */
+  --depth: 0;         /* no fake depth — flat, rule-driven */
+  --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+  name: "timecheese-dark";
+  color-scheme: dark;
+  --color-base-100: oklch(17% 0.015 75);   /* warm dark paper, from #14100b */
+  --color-base-200: oklch(21% 0.018 75);   /* from #1e1812 */
+  --color-base-300: oklch(29% 0.025 75);   /* from #332a1d */
+  --color-base-content: oklch(93% 0.02 90); /* from #f2eadb */
+  --color-primary: oklch(82% 0.16 84);       /* cheese gold pops on dark */
+  --color-primary-content: oklch(17% 0.02 75);
+  --color-secondary: oklch(68% 0.14 75);     /* deep amber, from #c98a12 */
+  --color-secondary-content: oklch(17% 0.02 75);
+  --color-accent: oklch(82% 0.16 84);
+  --color-accent-content: oklch(17% 0.02 75);
+  --color-neutral: oklch(29% 0.025 75);
+  --color-neutral-content: oklch(93% 0.02 90);
+  --color-info: oklch(72% 0.11 240);
+  --color-info-content: oklch(15% 0.02 240);
+  --color-success: oklch(72% 0.13 150);
+  --color-success-content: oklch(15% 0.02 150);
+  --color-warning: oklch(80% 0.15 80);
+  --color-warning-content: oklch(18% 0.03 80);
+  --color-error: oklch(65% 0.18 28);
+  --color-error-content: oklch(15% 0.02 28);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 2px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.15s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.15s !important;
+    transition-property: opacity !important;
+    scroll-behavior: auto !important;
+  }
 }

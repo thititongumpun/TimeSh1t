@@ -168,8 +168,13 @@ export function Archived() {
           </div>
         </div>
       )}
-      <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <h1 class="text-2xl font-bold">Archived</h1>
+      <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 class="font-display text-2xl font-bold">Archived</h1>
+          <p class="mt-1 font-mono text-sm opacity-60">
+            {new Date(from).toLocaleDateString()} – {new Date(to).toLocaleDateString()} · {rows.length} entries
+          </p>
+        </div>
         <div class="flex flex-wrap items-end gap-2">
           <label class="fieldset">
             <span class="label text-xs">Start month</span>
@@ -203,7 +208,7 @@ export function Archived() {
             {exporting ? <span class="loading loading-spinner loading-xs" /> : 'Export XLSX'}
           </button>
         </div>
-      </div>
+      </header>
       <form onSubmit={handleSearch} class="mb-4 flex flex-wrap items-center gap-2">
         <input
           type="search"
@@ -212,7 +217,7 @@ export function Archived() {
           value={query}
           onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
         />
-        <button type="submit" class="btn btn-primary btn-sm" disabled={searching || !query.trim()}>
+        <button type="submit" class="btn btn-outline btn-sm" disabled={searching || !query.trim()}>
           {searching ? <span class="loading loading-spinner loading-xs" /> : 'Search'}
         </button>
         {results !== null && (
@@ -221,7 +226,7 @@ export function Archived() {
         <button type="button" class="btn btn-outline btn-sm" disabled={indexing} onClick={handleIndex}>
           {indexing ? <span class="loading loading-spinner loading-xs" /> : 'Index archive'}
         </button>
-        {indexMsg && <span class="text-xs opacity-60">{indexMsg}</span>}
+        {indexMsg && <span class="font-mono text-xs opacity-60">{indexMsg}</span>}
       </form>
       {error && (
         <div class="alert alert-error mb-4">
@@ -230,12 +235,12 @@ export function Archived() {
       )}
       {results !== null ? (
         results.length === 0 ? (
-          <p class="text-base-content/50 py-8 text-center">No matches. Did you click "Index archive" first?</p>
+          <p class="text-base-content/50 py-8 text-center font-mono text-sm">No matches. Did you click "Index archive" first?</p>
         ) : (
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
+          <div class="overflow-x-auto rounded-box border-2 border-base-300">
+            <table class="table">
               <thead>
-                <tr>
+                <tr class="text-xs uppercase tracking-wide opacity-60">
                   <th>Date</th>
                   <th>Description</th>
                   <th>AI Summary</th>
@@ -244,8 +249,8 @@ export function Archived() {
               </thead>
               <tbody>
                 {results.map((r) => (
-                  <tr key={r.id}>
-                    <td class="whitespace-nowrap">{new Date(r.date_memo).toLocaleDateString()}</td>
+                  <tr key={r.id} class="hover:bg-base-200 transition-colors">
+                    <td class="whitespace-nowrap font-mono">{new Date(r.date_memo).toLocaleDateString()}</td>
                     <td class="max-w-xs"><ExpandableText text={r.description} clampClass="line-clamp-2" /></td>
                     <td class="min-w-64 max-w-md">
                       {r.ai_summary ? (
@@ -254,7 +259,7 @@ export function Archived() {
                         <span class="text-base-content/30">—</span>
                       )}
                     </td>
-                    <td class="whitespace-nowrap text-sm opacity-60">{r.similarity == null ? 'keyword' : `${Math.round(r.similarity * 100)}%`}</td>
+                    <td class="whitespace-nowrap font-mono text-sm opacity-60">{r.similarity == null ? 'keyword' : `${Math.round(r.similarity * 100)}%`}</td>
                   </tr>
                 ))}
               </tbody>
@@ -263,21 +268,18 @@ export function Archived() {
         )
       ) : (
       <>
-      <p class="mb-4 text-sm opacity-60">
-        Cutoff period: {new Date(from).toLocaleDateString()} – {new Date(to).toLocaleDateString()}
-      </p>
       {loading ? (
         <div class="flex justify-center py-8">
           <span class="loading loading-spinner loading-md" />
         </div>
       ) : rows.length === 0 ? (
-        <p class="text-base-content/50 py-8 text-center">No archived entries in this period.</p>
+        <p class="text-base-content/50 py-8 text-center font-mono text-sm">No archived entries in this period.</p>
       ) : (
         <>
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
+          <div class="overflow-x-auto rounded-box border-2 border-base-300">
+            <table class="table">
               <thead>
-                <tr>
+                <tr class="text-xs uppercase tracking-wide opacity-60">
                   <th>Date</th>
                   <th>Description</th>
                   <th>Project</th>
@@ -288,12 +290,14 @@ export function Archived() {
               </thead>
               <tbody>
                 {visible.map((t) => (
-                  <tr key={t.id}>
-                    <td class="whitespace-nowrap">{new Date(t.date_memo).toLocaleDateString()}</td>
+                  <tr key={t.id} class="hover:bg-base-200 transition-colors">
+                    <td class="whitespace-nowrap font-mono">{new Date(t.date_memo).toLocaleDateString()}</td>
                     <td class="max-w-xs"><ExpandableText text={t.description} clampClass="line-clamp-2" /></td>
                     <td>{t.projects?.project_name ?? <span class="text-base-content/30">—</span>}</td>
                     <td>
-                      <input type="checkbox" class="checkbox checkbox-sm" checked={t.is_complete} disabled />
+                      <span class={`badge badge-sm ${t.is_complete ? 'badge-success' : 'badge-ghost'}`}>
+                        {t.is_complete ? 'Done' : 'Open'}
+                      </span>
                     </td>
                     <td class="min-w-64 max-w-md">
                       {t.ai_summary ? (
@@ -317,7 +321,7 @@ export function Archived() {
             </table>
           </div>
           <div class="mt-4 flex items-center justify-between">
-            <span class="text-sm opacity-60">
+            <span class="font-mono text-xs opacity-60">
               Page {page + 1} of {pageCount} · {rows.length} entries
             </span>
             <div class="join">

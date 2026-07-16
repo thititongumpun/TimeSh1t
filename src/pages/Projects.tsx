@@ -43,12 +43,15 @@ export function Projects() {
 
   return (
     <div>
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold">Projects</h1>
-        <button class="btn btn-primary btn-circle text-xl" onClick={() => setModalOpen(true)}>
-          +
+      <header class="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="font-display font-bold text-2xl">Projects</h1>
+          <p class="text-sm opacity-60 font-mono">{projects.length} project{projects.length === 1 ? '' : 's'}</p>
+        </div>
+        <button class="btn btn-primary" onClick={() => setModalOpen(true)}>
+          New project
         </button>
-      </div>
+      </header>
       {error && (
         <div class="alert alert-error mb-4">
           <span>{error}</span>

@@ -42,7 +42,13 @@ export function Holiday() {
 
   return (
     <div>
-      <h1 class="text-2xl font-bold mb-4">Holiday</h1>
+      <header class="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="font-display font-bold text-2xl">Holiday</h1>
+          <p class="text-sm opacity-60 font-mono">{loading ? 'loading…' : `${holidays.length} holiday${holidays.length === 1 ? '' : 's'}`}</p>
+        </div>
+      </header>
+
       {error && (
         <div class="alert alert-error mb-4">
           <span>{error}</span>
@@ -53,21 +59,32 @@ export function Holiday() {
           <span class="loading loading-spinner loading-md" />
         </div>
       )}
+
       {/* always mounted so ref.current exists when fetch resolves and inits the calendar */}
-      <div ref={ref} />
+      <div class="card border-2 border-base-300 mb-6">
+        <div class="card-body p-4">
+          <div ref={ref} />
+        </div>
+      </div>
+
+      {!loading && !error && holidays.length === 0 && (
+        <div class="py-12 text-center">
+          <p class="font-mono text-sm opacity-60">No holidays found.</p>
+        </div>
+      )}
 
       {holidays.length > 0 && (
-        <div class="overflow-x-auto mt-4">
-          <table class="table table-zebra">
+        <div class="card overflow-x-auto border-2 border-base-300">
+          <table class="table">
             <thead>
               <tr>
-                <th class="w-40">Date</th>
-                <th>Holiday</th>
+                <th class="w-40 text-xs uppercase tracking-wide opacity-60">Date</th>
+                <th class="text-xs uppercase tracking-wide opacity-60">Holiday</th>
               </tr>
             </thead>
             <tbody>
               {holidays.map((h) => (
-                <tr key={h.date} class="cursor-pointer hover" onClick={() => jumpTo(h.date)}>
+                <tr key={h.date} class="cursor-pointer hover:bg-base-200" onClick={() => jumpTo(h.date)}>
                   <td class="font-mono text-sm opacity-70 whitespace-nowrap">{h.date}</td>
                   <td>{h.name}</td>
                 </tr>

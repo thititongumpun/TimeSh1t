@@ -346,22 +346,27 @@ export function Home() {
     loadTimesheets()
   }
 
+  const monthLabel = filters.date_from
+    ? new Date(filters.date_from + 'T00:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    : 'All dates'
+
   return (
     <div>
       <CutoffCountdown />
       {!missingDismissed && (
         <MissingDaysBanner days={missingDays} onDismiss={() => setMissingDismissed(true)} />
       )}
-      <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-bold">Timesheets</h1>
-        <button
-          class="btn btn-primary btn-circle text-xl tooltip tooltip-left"
-          data-tip="New entry"
-          onClick={() => setModalOpen(true)}
-        >
-          +
+      <header class="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="font-display text-2xl font-bold">Timesheets</h1>
+          <p class="font-mono text-xs tracking-wide opacity-60">
+            {timesheets.length} {timesheets.length === 1 ? 'entry' : 'entries'} · {monthLabel}
+          </p>
+        </div>
+        <button class="btn btn-primary" onClick={() => setModalOpen(true)}>
+          New entry
         </button>
-      </div>
+      </header>
       {error && (
         <div class="alert alert-error mb-4">
           <span>{error}</span>
@@ -378,7 +383,7 @@ export function Home() {
       {selectedIds.size > 0 && (
         <div class="mb-4 flex items-center gap-3 rounded-lg bg-base-200 px-4 py-2">
           <span class="text-sm">{selectedIds.size} selected</span>
-          <button class="btn btn-primary btn-sm" onClick={handleMarkSelectedDone}>
+          <button class="btn btn-secondary btn-sm" onClick={handleMarkSelectedDone}>
             Mark done
           </button>
           {isTauri && (
@@ -396,6 +401,13 @@ export function Home() {
       {loading ? (
         <div class="flex justify-center py-8">
           <span class="loading loading-spinner loading-md" />
+        </div>
+      ) : timesheets.length === 0 ? (
+        <div class="py-16 text-center">
+          <p class="font-mono text-sm opacity-60">No entries for this period.</p>
+          <button class="btn btn-ghost btn-sm mt-4" onClick={() => setModalOpen(true)}>
+            New entry
+          </button>
         </div>
       ) : (
         <TimesheetTable

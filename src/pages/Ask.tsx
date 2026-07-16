@@ -3,6 +3,8 @@ import { searchArchived, type ArchivedMatch } from '../services/timesheets'
 import { chatOverContext } from '../services/cloudflare-ai'
 import { ExpandableText } from '../components/ExpandableText'
 
+const EXAMPLE_QUESTION = 'What did I work on last week?'
+
 export function Ask() {
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
@@ -40,9 +42,16 @@ export function Ask() {
 
   return (
     <div>
-      <h1 class="text-2xl font-bold mb-4">Ask</h1>
+      <header class="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="font-display font-bold text-2xl">Ask</h1>
+          <p class="text-sm opacity-60 font-mono">
+            {sources.length > 0 ? `${sources.length} source${sources.length === 1 ? '' : 's'}` : 'search your archived work'}
+          </p>
+        </div>
+      </header>
 
-      <form onSubmit={ask} class="mb-6 flex gap-2">
+      <form onSubmit={ask} class="mb-8 flex gap-2">
         <input
           type="text"
           class="input flex-1"
@@ -61,8 +70,17 @@ export function Ask() {
         </div>
       )}
 
+      {!answer && !loading && !error && (
+        <div class="py-12 text-center">
+          <p class="font-mono text-sm opacity-60 mb-3">Ask a question to search your archived timesheets.</p>
+          <button class="btn btn-ghost btn-sm" onClick={() => setQuestion(EXAMPLE_QUESTION)}>
+            Try: “{EXAMPLE_QUESTION}”
+          </button>
+        </div>
+      )}
+
       {answer && (
-        <div class="card bg-base-200 mb-4">
+        <div class="card border-2 border-base-300 mb-6">
           <div class="card-body p-4">
             <p class="whitespace-pre-wrap break-words">{answer}</p>
           </div>
@@ -71,11 +89,11 @@ export function Ask() {
 
       {sources.length > 0 && (
         <div>
-          <div class="text-sm font-medium opacity-60 mb-2">Based on these entries</div>
-          <ul class="space-y-2">
+          <div class="text-xs uppercase tracking-wide opacity-60 mb-3">Based on these entries</div>
+          <ul class="space-y-3">
             {sources.map((s) => (
               <li key={s.id} class="text-sm">
-                <span class="opacity-50 mr-2">{new Date(s.date_memo).toLocaleDateString()}</span>
+                <span class="opacity-50 mr-2 font-mono">{new Date(s.date_memo).toLocaleDateString()}</span>
                 <ExpandableText text={s.description} clampClass="line-clamp-2" />
               </li>
             ))}

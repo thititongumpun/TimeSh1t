@@ -71,9 +71,16 @@ export function JiraAssistant() {
     }
   }
 
+  const statusMeta = status === 'ready' ? 'connected' : status === null ? 'checking…' : 'not connected'
+
   return (
     <div>
-      <h1 class="text-2xl font-bold mb-4">Jira</h1>
+      <header class="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="font-display font-bold text-2xl">Jira</h1>
+          <p class="text-sm opacity-60 font-mono">{statusMeta}</p>
+        </div>
+      </header>
 
       {status === null && (
         <div class="flex justify-center py-8">
@@ -82,7 +89,7 @@ export function JiraAssistant() {
       )}
 
       {status === 'no_cli' && (
-        <div class="card bg-base-200">
+        <div class="card bg-base-200 border-2 border-base-300">
           <div class="card-body">
             <h2 class="card-title text-lg">Set up Claude Code first</h2>
             <p class="text-sm opacity-70">
@@ -122,7 +129,7 @@ export function JiraAssistant() {
       )}
 
       {status === 'no_jira_mcp' && (
-        <div class="card bg-base-200">
+        <div class="card bg-base-200 border-2 border-base-300">
           <div class="card-body">
             <h2 class="card-title text-lg">Connect Jira</h2>
             <p class="text-sm opacity-70">
@@ -174,13 +181,13 @@ export function JiraAssistant() {
           </form>
 
           {loading && (
-            <div class="mb-4 rounded-lg bg-base-200 p-3">
+            <div class="mb-4 rounded-lg bg-base-200 border-2 border-base-300 p-3">
               <div class="flex items-center gap-2 text-sm font-medium">
                 <span class="loading loading-spinner loading-xs" />
                 Working…
               </div>
               {progress.length > 0 && (
-                <ul class="mt-2 space-y-1 text-sm opacity-70">
+                <ul class="mt-2 space-y-1 text-sm opacity-70 font-mono">
                   {progress.map((p, i) => <li key={i}>• {p}</li>)}
                 </ul>
               )}
@@ -194,7 +201,7 @@ export function JiraAssistant() {
           )}
 
           {output && (
-            <pre class="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-base-200 p-3 text-sm font-sans">
+            <pre class="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-base-200 border-2 border-base-300 p-3 text-sm font-sans">
               {output}
             </pre>
           )}
