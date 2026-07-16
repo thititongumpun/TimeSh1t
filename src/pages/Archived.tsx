@@ -32,11 +32,27 @@ export function periodRange(startMonth: string, endMonth: string): { from: strin
   }
 }
 
+// Sentinel select value for "rows with no project" — distinct from '' (All projects).
+export const NO_PROJECT = '\0no-project'
+
+// Distinct project names present in `rows`, sorted, plus NO_PROJECT if any row lacks one.
+export function projectOptions(rows: TimesheetWithProject[]): string[] {
+  const names = [...new Set(rows.map((r) => r.projects?.project_name).filter((n): n is string => !!n))].sort()
+  return rows.some((r) => !r.projects?.project_name) ? [...names, NO_PROJECT] : names
+}
+
+export function filterByProject(rows: TimesheetWithProject[], projectFilter: string): TimesheetWithProject[] {
+  if (!projectFilter) return rows
+  if (projectFilter === NO_PROJECT) return rows.filter((r) => !r.projects?.project_name)
+  return rows.filter((r) => r.projects?.project_name === projectFilter)
+}
+
 export function Archived() {
   const [rows, setRows] = useState<TimesheetWithProject[]>([])
   const [startMonth, setStartMonth] = useState(currentMonth())
   const [endMonth, setEndMonth] = useState(currentMonth())
   const [page, setPage] = useState(0)
+  const [projectFilter, setProjectFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
@@ -93,7 +109,13 @@ export function Archived() {
     setPage(0)
     fetchArchivedTimesheetsInRange(from, to).then(({ data, error }) => {
       if (error) setError(error.message)
-      else setRows((data as TimesheetWithProject[]) ?? [])
+      else {
+        const newRows = (data as TimesheetWithProject[]) ?? []
+        setRows(newRows)
+        // Avoid a stuck empty table if the selected project doesn't exist in the new range.
+        // Functional update: the effect closure's projectFilter is stale if it changed mid-fetch.
+        setProjectFilter((prev) => (prev && !projectOptions(newRows).includes(prev) ? '' : prev))
+      }
       setLoading(false)
     })
   }, [startMonth, endMonth])
@@ -149,8 +171,10 @@ export function Archived() {
     setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 2000)
   }
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
-  const visible = rows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
+  const projectFilterOptions = projectOptions(rows)
+  const filteredRows = filterByProject(rows, projectFilter)
+  const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE))
+  const visible = filteredRows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
 
   // page numbers to render: first, last, current ±1, with '…' gaps
   const pageItems: (number | '…')[] = []
@@ -172,7 +196,7 @@ export function Archived() {
         <div>
           <h1 class="font-display text-2xl font-bold">Archived</h1>
           <p class="mt-1 font-mono text-sm opacity-60">
-            {new Date(from).toLocaleDateString()} – {new Date(to).toLocaleDateString()} · {rows.length} entries
+            {new Date(from).toLocaleDateString()} – {new Date(to).toLocaleDateString()} · {filteredRows.length} entries
           </p>
         </div>
         <div class="flex flex-wrap items-end gap-2">
@@ -203,6 +227,22 @@ export function Archived() {
                 if (v < startMonth) setStartMonth(v)
               }}
             />
+          </label>
+          <label class="fieldset">
+            <span class="label text-xs">Project</span>
+            <select
+              class="select select-sm"
+              value={projectFilter}
+              onInput={(e) => {
+                setProjectFilter((e.target as HTMLSelectElement).value)
+                setPage(0)
+              }}
+            >
+              <option value="">All projects</option>
+              {projectFilterOptions.map((p) => (
+                <option key={p} value={p}>{p === NO_PROJECT ? 'No project' : p}</option>
+              ))}
+            </select>
           </label>
           <button class="btn btn-primary btn-sm" disabled={exporting || rows.length === 0} onClick={handleExport}>
             {exporting ? <span class="loading loading-spinner loading-xs" /> : 'Export XLSX'}
@@ -322,7 +362,7 @@ export function Archived() {
           </div>
           <div class="mt-4 flex items-center justify-between">
             <span class="font-mono text-xs opacity-60">
-              Page {page + 1} of {pageCount} · {rows.length} entries
+              Page {page + 1} of {pageCount} · {filteredRows.length} entries
             </span>
             <div class="join">
               <button
