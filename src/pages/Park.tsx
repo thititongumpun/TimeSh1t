@@ -132,13 +132,35 @@ export function Park() {
         </div>
       )}
 
-      <div class="grid gap-6 lg:grid-cols-2 max-w-4xl items-start">
-        {/* Send card */}
-        <div class="card bg-base-200 border-2 border-base-300">
-          <div class="card-body">
+      <div class="grid gap-6 items-start lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] max-w-4xl">
+        {/* PRIMARY — action zone: compact tool, not a hero */}
+        <section class="card bg-base-200 border-2 border-base-300">
+          <div class="card-body gap-3 p-4">
             <h2 class="card-title text-base">
-              <span aria-hidden="true">🎫</span> Carpark card
+              <span aria-hidden="true">🎫</span> Send to Msync
             </h2>
+
+            {/* selected vehicle — non-interactive "parking ticket" display; hover-3d zones block clicks so no controls live inside it */}
+            {selected ? (
+              <div class="hover-3d mx-auto w-fit">
+                <div class="flex flex-col items-center gap-1 rounded-box border-2 border-primary bg-base-100 px-6 py-3">
+                  <span class="font-mono font-bold text-2xl tracking-widest">{selected.license_plate}</span>
+                  <span class="badge badge-ghost badge-sm">
+                    <span aria-hidden="true">{TYPE_ICON[selected.vehicle_type]}</span> {MSYNC_TYPE[selected.vehicle_type]}
+                  </span>
+                </div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            ) : (
+              <p class="font-mono text-sm opacity-60">No vehicle selected — add one to enable sending.</p>
+            )}
 
             <fieldset class="fieldset">
               <label class="label" for="park-card-no">Card no.</label>
@@ -162,7 +184,7 @@ export function Park() {
               </label>
             </fieldset>
 
-            <div class="card-actions mt-2">
+            <div class="card-actions">
               <button
                 class="btn btn-primary btn-block"
                 onClick={sendToMsync}
@@ -175,26 +197,25 @@ export function Park() {
             <p class="text-xs opacity-60 text-center">
               {selected
                 ? `Submits as ${TYPE_ICON[selected.vehicle_type]} ${selected.license_plate}`
-                : 'Add a vehicle below to enable sending.'}
+                : 'Add a vehicle to enable sending.'}
             </p>
           </div>
-        </div>
+        </section>
 
-        {/* Vehicles card */}
-        <div class="card bg-base-200 border-2 border-base-300">
-          <div class="card-body">
+        {/* SECONDARY — vehicles: quiet outlined surface, no fill so it recedes */}
+        <section class="card border-2 border-base-300">
+          <div class="card-body gap-3">
             <h2 class="card-title text-base">
-              <span aria-hidden="true">🚙</span> My vehicles
+              <span aria-hidden="true">🚙</span> Vehicles
+              {vehicles.length > 0 && <span class="badge badge-ghost badge-sm">{vehicles.length}</span>}
             </h2>
 
             {vehicles.length === 0 ? (
-              <div class="alert alert-warning">
-                <span>No vehicles yet — Msync needs a car type and license plate.</span>
-              </div>
+              <p class="font-mono text-sm opacity-60">No vehicles yet — add one below.</p>
             ) : (
               <ul>
                 {vehicles.map((v) => (
-                  <li key={v.id} class="flex items-center gap-3 border-b border-base-300 py-2 last:border-none hover:bg-base-100 transition-colors">
+                  <li key={v.id} class="flex items-center gap-3 border-b border-base-300 py-1.5 last:border-none hover:bg-base-200 transition-colors">
                     <input
                       type="radio"
                       name="default-vehicle"
@@ -203,12 +224,11 @@ export function Park() {
                       onChange={() => makeDefault(v.id)}
                       aria-label={`Use ${v.license_plate}`}
                     />
-                    <span class="text-xl" aria-hidden="true">{TYPE_ICON[v.vehicle_type]}</span>
+                    <span class="text-lg" aria-hidden="true">{TYPE_ICON[v.vehicle_type]}</span>
                     <span class="flex-1 flex items-center gap-2">
                       <span class="font-mono font-medium">{v.license_plate}</span>
                       <span class="badge badge-ghost badge-sm">{MSYNC_TYPE[v.vehicle_type]}</span>
                     </span>
-                    {v.is_default && <span class="badge badge-accent badge-sm">default</span>}
                     <button
                       class="btn btn-ghost btn-xs text-error"
                       onClick={() => removeVehicle(v.id)}
@@ -221,9 +241,9 @@ export function Park() {
               </ul>
             )}
 
-            <div class="join mt-2 w-full">
+            <div class="join w-full">
               <select
-                class="select select-sm join-item w-32"
+                class="select select-sm join-item w-28"
                 value={newType}
                 onInput={(e) => setNewType(e.currentTarget.value as Vehicle['vehicle_type'])}
               >
@@ -238,47 +258,45 @@ export function Park() {
                 onKeyDown={(e) => { if (e.key === 'Enter' && newPlate.trim() && !saving) addVehicle() }}
               />
               <button
-                class="btn btn-sm btn-outline join-item"
+                class="btn btn-sm btn-ghost join-item"
                 onClick={addVehicle}
                 disabled={!newPlate.trim() || saving}
               >
                 {saving && <span class="loading loading-spinner loading-xs" />}
-                Add
+                Add vehicle
               </button>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
-      {/* Fill log */}
+      {/* TERTIARY — fill log: quiet, dense, mono timestamps */}
       {isTauri && fillLog.length > 0 && (
-        <div class="card bg-base-200 border-2 border-base-300 mt-6 max-w-4xl">
-          <div class="card-body">
-            <div class="flex items-center justify-between">
-              <h2 class="card-title text-base">
-                <span aria-hidden="true">🧾</span> Park fill log
-                <span class="badge badge-ghost badge-sm">{fillLog.length}</span>
-              </h2>
-              <button
-                class="btn btn-ghost btn-xs"
-                onClick={() => {
-                  localStorage.removeItem('park_fill_log')
-                  setFillLog([])
-                }}
-              >
-                Clear log
-              </button>
-            </div>
-            <ul class="text-sm">
-              {fillLog.map((run) => (
-                <li key={run.at} class="flex justify-between border-b border-base-300 py-1 last:border-none hover:bg-base-100 transition-colors">
-                  <span class="font-mono">Card {run.cardNo}</span>
-                  <span class="opacity-60 font-mono">{new Date(run.at).toLocaleString()}</span>
-                </li>
-              ))}
-            </ul>
+        <section class="mt-6 max-w-4xl border-2 border-base-300 rounded-box p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-xs uppercase tracking-wide opacity-60 flex items-center gap-2">
+              Park fill log
+              <span class="badge badge-ghost badge-sm">{fillLog.length}</span>
+            </h2>
+            <button
+              class="btn btn-ghost btn-xs"
+              onClick={() => {
+                localStorage.removeItem('park_fill_log')
+                setFillLog([])
+              }}
+            >
+              Clear log
+            </button>
           </div>
-        </div>
+          <ul class="text-sm">
+            {fillLog.map((run) => (
+              <li key={run.at} class="flex justify-between border-b border-base-300 py-1 last:border-none hover:bg-base-200 transition-colors">
+                <span class="font-mono">Card {run.cardNo}</span>
+                <span class="opacity-60 font-mono">{new Date(run.at).toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {toast && (

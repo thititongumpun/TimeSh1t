@@ -3,6 +3,11 @@
 All notable changes to TimeCheese are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.11.0] - 2026-07-16
+
+- **Project filter on Archived**: filter the archived table by project (or "No project") alongside the month-range controls — counts and pagination follow the filter.
+- **Park page redesign**: compact Send-to-Msync card with a 3D-hover "parking ticket" showing the selected vehicle, sitting beside the vehicles list; fill log below.
+
 ## [4.10.0] - 2026-07-16
 
 - **Self-signup with admin approval**: new users click "New here? Request access" on the sign-in screen, verify their email with a 6-digit code, set a password, and wait on an approval screen until the admin flips their `approved` flag in Supabase. Access is enforced by row-level security, not just the UI. The old "First time? Set up your password" flow is gone — the signup path covers provisioned accounts too. Requires the `20260716_profiles_approval.sql` migration and enabling email signups in Supabase.

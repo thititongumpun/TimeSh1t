@@ -189,6 +189,16 @@ pixel values in `style=` attributes.
   whatever the page's function already is. Do not change what a page *does*.
 - Density (Home is dense; Notes/Ask are airy).
 
+## Variants
+
+- **Park ticket card (user-requested, 2026-07-16)**: the Park page's selected-vehicle
+  display may render as a compact non-interactive "parking ticket" card wrapped in
+  DaisyUI v5.6 `hover-3d` (the one sanctioned exception to the flat/no-depth rule —
+  transform-only hover, and the global reduced-motion rule collapses it). The
+  `hover-3d` wrapper must contain NO interactive elements (its hover zones block
+  clicks); form controls (card-no input, Send button) live outside it. No other
+  page adopts hover-3d without amending this entry.
+
 ## Hard constraints (implementation safety)
 
 - Visual/interaction layer ONLY. No changes to services, stores, routing, data flow,
