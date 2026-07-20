@@ -3,6 +3,15 @@
 All notable changes to TimeCheese are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.11.3] - 2026-07-20
+
+### Added
+
+- **Archived rows show their time slot**: the Date cell now renders the
+  `start–end` sub-line that Home already had. The archive table has carried
+  `start_time`/`end_time` since v4.1.0 — they were fetched but never displayed.
+  Pre-v4.1.0 rows have no times and still show the date alone.
+
 ## [4.11.2] - 2026-07-20
 
 ### Added
