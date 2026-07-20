@@ -97,7 +97,14 @@ export function TimesheetModal({ timesheet, projects, onClose }: Props) {
   }
 
   return (
-    <dialog class="modal modal-open">
+    <dialog
+      ref={(el) => el?.showModal()}
+      class="modal"
+      onCancel={(e) => {
+        e.preventDefault() // avoid a duplicate native "close" firing onClose again
+        onClose()
+      }}
+    >
       <div class="modal-box">
         <h3 class="font-display font-bold text-lg mb-4">
           {timesheet ? 'Edit Entry' : 'New Entry'}
@@ -156,6 +163,7 @@ export function TimesheetModal({ timesheet, projects, onClose }: Props) {
               onInput={(e) => setDescription(e.currentTarget.value)}
               rows={3}
               required
+              autofocus
             />
             {suggestions.length > 0 && (
               <ul class="menu menu-sm bg-base-200 rounded-box mt-1 p-1">

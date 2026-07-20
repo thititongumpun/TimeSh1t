@@ -76,6 +76,15 @@
   --noise: 0;
 }
 
+/* Press feedback: unlayered so it beats daisyui's @layer'd .btn rules regardless
+   of source order — no @layer needed. Scale down (never up) so a press reads as
+   press, not lift. Instant state change, not an animation, so the reduced-motion
+   block below does not need to touch it. */
+.btn:active:not(:disabled) {
+  scale: 0.975;
+  filter: brightness(1.06);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -1,7 +1,6 @@
 import type { ComponentChildren } from 'preact'
 import { useRef, useState } from 'preact/hooks'
 import { Sidebar } from './Sidebar'
-import { UpdateBadge } from './UpdateBadge'
 import packageJson from '../../package.json'
 
 interface LayoutProps {
@@ -16,7 +15,6 @@ export function Layout({ children }: LayoutProps) {
     <div class="drawer h-screen lg:drawer-open">
       <input id="app-drawer" type="checkbox" class="drawer-toggle" defaultChecked />
       <div class="drawer-content flex h-screen flex-col overflow-hidden bg-base-100">
-        <UpdateBadge />
         {/* Opens the drawer on small windows, where the sidebar is hidden instead of icon-only */}
         <label
           for="app-drawer"

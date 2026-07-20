@@ -3,6 +3,26 @@
 All notable changes to TimeCheese are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are git tags.
 
+## [4.11.1] - 2026-07-20
+
+### Fixed
+
+- **Park sends no longer look finished early**: the Send button stayed enabled while the Msync job was still running, because it reset as soon as the window opened rather than when the fill completed. Clicking again mid-run could double-fill.
+- **Duplicate fill-log rows on Park**: each send registered a new completion listener that was never released when a run was abandoned, so later completions wrote one row per abandoned run.
+- **Modal keyboard access**: the timesheet and project modals are now real `showModal()` dialogs — Escape closes them, focus moves inside and is trapped, and the first editable field is focused on open.
+- **Single update check per launch**: the update check ran twice from two components, showing two update prompts.
+
+### Changed
+
+- **Tables no longer blank on refresh**: marking done, deleting, changing filters, or closing the modal repainted the whole table through a spinner; the existing rows now stay on screen while data refreshes.
+- **Buttons respond to being pressed**: added a press state (there was none anywhere in the app).
+- **Faster startup**: the ~430 kB spreadsheet library used only by Archived's export now loads on demand instead of at launch, halving the main bundle.
+- **One loading spinner at launch, not two**, and none at all for loads under 200 ms.
+- **Vehicle selection on Park is instant** instead of waiting for the server round-trip.
+- **Holiday calendar no longer shifts the page** as it loads.
+- **Date filters fetch once per change** instead of once per typed segment.
+- Cutoff countdown ticks per minute rather than per second.
+
 ## [4.11.0] - 2026-07-16
 
 - **Project filter on Archived**: filter the archived table by project (or "No project") alongside the month-range controls — counts and pagination follow the filter.

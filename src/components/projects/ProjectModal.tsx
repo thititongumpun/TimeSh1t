@@ -34,7 +34,14 @@ export function ProjectModal({ project, onClose }: Props) {
   }
 
   return (
-    <dialog class="modal modal-open">
+    <dialog
+      ref={(el) => el?.showModal()}
+      class="modal"
+      onCancel={(e) => {
+        e.preventDefault() // avoid a duplicate native "close" firing onClose again
+        onClose()
+      }}
+    >
       <div class="modal-box border-2 border-base-300">
         <h3 class="font-display font-bold text-lg mb-4">{project ? 'Edit Project' : 'New Project'}</h3>
         <form onSubmit={handleSubmit}>
@@ -52,6 +59,7 @@ export function ProjectModal({ project, onClose }: Props) {
               value={projectNo}
               onInput={(e) => setProjectNo(e.currentTarget.value)}
               required
+              autofocus
             />
           </div>
           <div class="fieldset mb-3">

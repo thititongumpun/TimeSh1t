@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'preact/hooks'
-import * as XLSX from 'xlsx'
 import { save } from '@tauri-apps/plugin-dialog'
 import { writeFile } from '@tauri-apps/plugin-fs'
 import { writeText } from '@tauri-apps/plugin-clipboard-manager'
@@ -139,6 +138,7 @@ export function Archived() {
     }
     setExporting(true)
     setError(null)
+    const XLSX = await import('xlsx')
     const sheet = XLSX.utils.json_to_sheet(rows.map((t) => ({
       Date: new Date(t.date_memo).toLocaleDateString(),
       Start: t.start_time?.slice(0, 5) ?? '', // "09:00:00" -> "09:00"; null on pre-v4.1.0 rows

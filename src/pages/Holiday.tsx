@@ -63,7 +63,10 @@ export function Holiday() {
       {/* always mounted so ref.current exists when fetch resolves and inits the calendar */}
       <div class="card border-2 border-base-300 mb-6">
         <div class="card-body p-4">
-          <div ref={ref} />
+          {/* min-h reserves vanilla-calendar-pro's real mounted height (verified from its
+              shipped layout.css + default displayDatesOutside:true → fixed 6-week grid):
+              2×1rem container padding + 44px header + 24px weekday row + 6×34px date rows = 304px */}
+          <div ref={ref} class="min-h-[304px]" />
         </div>
       </div>
 

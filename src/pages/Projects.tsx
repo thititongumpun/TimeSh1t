@@ -13,7 +13,7 @@ export function Projects() {
   const [editingProject, setEditingProject] = useState<Project | null>(null)
 
   async function load() {
-    setLoading(true)
+    if (projects.length === 0) setLoading(true)
     setError(null)
     const { data, error } = await fetchProjects()
     if (error) setError(error.message)

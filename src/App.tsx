@@ -54,9 +54,16 @@ export function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (authLoading.value) {
+  // Merged gate: covers both "checking session" and "checking approval" so a
+  // cached session shows at most one spinner instead of two in sequence.
+  // Reveal is delayed ~200ms (hard cutoff, not a fade) so sub-200ms loads show nothing at all.
+  if (authLoading.value || (currentUser.value && approved.value === null)) {
     return (
-      <div class="min-h-screen flex items-center justify-center bg-base-100">
+      <div
+        class="min-h-screen flex items-center justify-center bg-base-100"
+        style={{ animation: 'app-gate-reveal 200ms forwards' }}
+      >
+        <style>{`@keyframes app-gate-reveal { 0%, 99% { opacity: 0 } 100% { opacity: 1 } }`}</style>
         <span class="loading loading-spinner loading-lg"></span>
       </div>
     )
@@ -64,14 +71,6 @@ export function App() {
 
   if (!currentUser.value) {
     return <Login />
-  }
-
-  if (approved.value === null) {
-    return (
-      <div class="min-h-screen flex items-center justify-center bg-base-100">
-        <span class="loading loading-spinner loading-lg"></span>
-      </div>
-    )
   }
 
   if (approved.value === false) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { writeText } from '@tauri-apps/plugin-clipboard-manager'
@@ -36,6 +36,7 @@ export function Park() {
   const [newPlate, setNewPlate] = useState('')
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
+  const sendTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // The vehicle sent to Msync: the default one, else the first.
   const selected = vehicles.find((v) => v.is_default) ?? vehicles[0] ?? null
@@ -47,6 +48,21 @@ export function Park() {
   }
 
   useEffect(() => { loadVehicles() }, [])
+
+  // Registered once for the component's life — Rust emits this when the fill script
+  // clicks Submit, seconds-to-minutes after open_park_window returns.
+  useEffect(() => {
+    if (!isTauri) return
+    const unlistening = listen<string>('park-filled', ({ payload: card }) => {
+      if (sendTimeout.current) clearTimeout(sendTimeout.current)
+      setSending(false)
+      const log = [{ at: new Date().toISOString(), cardNo: card }, ...readParkLog()].slice(0, 50)
+      localStorage.setItem('park_fill_log', JSON.stringify(log))
+      setFillLog(log)
+      showToast(`Card ${card} submitted in Msync`)
+    })
+    return () => { unlistening.then((unlisten) => unlisten()) }
+  }, [])
 
   function showToast(msg: string) {
     setToast(msg)
@@ -76,9 +92,13 @@ export function Park() {
   }
 
   async function makeDefault(id: string) {
+    const prev = vehicles
+    setVehicles((vs) => vs.map((v) => ({ ...v, is_default: v.id === id }))) // optimistic — avoids the radio snapping back while the mutation is in flight
     const { error } = await setDefaultVehicle(id)
-    if (error) setError(error.message)
-    else loadVehicles()
+    if (error) {
+      setError(error.message)
+      setVehicles(prev)
+    }
   }
 
   async function sendToMsync() {
@@ -95,22 +115,17 @@ export function Park() {
           plate: selected.license_plate,
         })
         showToast('Msync opened — autofilling card ' + cardNo)
-        // Fired by Rust once the fill script has clicked Submit.
-        const unlisten = await listen<string>('park-filled', ({ payload: card }) => {
-          unlisten()
-          const log = [{ at: new Date().toISOString(), cardNo: card }, ...readParkLog()].slice(0, 50)
-          localStorage.setItem('park_fill_log', JSON.stringify(log))
-          setFillLog(log)
-          showToast(`Card ${card} submitted in Msync`)
-        })
+        // Stays "sending" until the park-filled listener above fires, or this times out
+        // (the window can be closed before the fill script finishes, which never emits).
+        sendTimeout.current = setTimeout(() => setSending(false), 120_000)
       } else {
         await navigator.clipboard.writeText(cardNo)
         window.open(MSYNC_PARK_URL)
         showToast('Card no. copied — paste it in Msync')
+        setSending(false)
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to open Msync')
-    } finally {
       setSending(false)
     }
   }

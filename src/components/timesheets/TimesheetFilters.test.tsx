@@ -38,7 +38,7 @@ describe('TimesheetFilters', () => {
   it('calls onChange with updated date_from when date input changes', () => {
     const onChange = vi.fn()
     render(<TimesheetFilters filters={filters} projects={[]} onChange={onChange} />)
-    fireEvent.input(screen.getByLabelText(/from/i), { target: { value: '2026-05-01' } })
+    fireEvent.change(screen.getByLabelText(/from/i), { target: { value: '2026-05-01' } })
     expect(onChange).toHaveBeenCalledWith({ ...filters, date_from: '2026-05-01' })
   })
 })

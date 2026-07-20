@@ -16,7 +16,7 @@ export function TimesheetFilters({ filters, projects, onChange }: Props) {
           type="date"
           class="input input-sm font-mono"
           value={filters.date_from ?? ''}
-          onInput={(e) => onChange({ ...filters, date_from: e.currentTarget.value || null })}
+          onChange={(e) => onChange({ ...filters, date_from: e.currentTarget.value || null })}
         />
       </div>
       <div class="fieldset">
@@ -26,7 +26,7 @@ export function TimesheetFilters({ filters, projects, onChange }: Props) {
           type="date"
           class="input input-sm font-mono"
           value={filters.date_to ?? ''}
-          onInput={(e) => onChange({ ...filters, date_to: e.currentTarget.value || null })}
+          onChange={(e) => onChange({ ...filters, date_to: e.currentTarget.value || null })}
         />
       </div>
       <div class="fieldset">

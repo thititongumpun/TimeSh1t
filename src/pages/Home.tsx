@@ -37,7 +37,7 @@ function nextCutoff(from: Date): Date {
 function CutoffCountdown() {
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000)
+    const id = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(id)
   }, [])
 
@@ -46,9 +46,8 @@ function CutoffCountdown() {
   const days = Math.floor(secs / 86400)
   const hours = Math.floor(secs / 3600) % 24
   const mins = Math.floor(secs / 60) % 60
-  const s = secs % 60
 
-  const units: [string, number][] = [['days', days], ['hours', hours], ['min', mins], ['sec', s]]
+  const units: [string, number][] = [['days', days], ['hours', hours], ['min', mins]]
 
   return (
     <div class="flex flex-col items-center gap-2 mb-4">
@@ -118,7 +117,7 @@ export function Home() {
   const [missingDismissed, setMissingDismissed] = useState(false)
 
   async function loadTimesheets() {
-    setLoading(true)
+    if (timesheets.length === 0) setLoading(true)
     setError(null)
     const { data, error } = await fetchTimesheets(filters)
     if (error) setError(error.message)
